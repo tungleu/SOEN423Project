@@ -11,7 +11,6 @@ import replicaOne.model.ServerInventory;
 import javax.annotation.Nullable;
 
 import static common.ReplicaConstants.*;
-import static util.MessageUtil.messageToUDPResponse;
 
 public final class ReplicaUtil {
 
@@ -48,7 +47,7 @@ public final class ReplicaUtil {
             return new ReplicaOneData(new ServerInventory(BC_SERVER_NAME), new ServerInventory(QC_SERVER_NAME),
                                       new ServerInventory(ON_SERVER_NAME));
         } else {
-            return (ReplicaOneData) messageToUDPResponse(message).getResponse();
+            return message.getObject();
         }
     }
 
