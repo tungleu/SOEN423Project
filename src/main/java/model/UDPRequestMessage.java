@@ -1,6 +1,7 @@
 package model;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 public class UDPRequestMessage implements Serializable {
@@ -15,6 +16,10 @@ public class UDPRequestMessage implements Serializable {
         this.parameters = parameters;
         this.checksum = checksum;
         this.pid = pid;
+    }
+
+    public UDPRequestMessage(RequestType requestType) {
+        this(requestType, Collections.emptyList(), "", "");
     }
 
     public RequestType getRequestType() {
