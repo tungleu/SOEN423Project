@@ -1,11 +1,12 @@
 package replicaOne.model;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by Kevin Tan 2020-10-21
  */
-public class PurchaseLog {
+public class PurchaseLog implements Serializable {
 
     private final String itemName;
     private final String itemId;

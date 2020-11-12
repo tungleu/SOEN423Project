@@ -1,12 +1,13 @@
 package replicaOne.model;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Kevin Tan 2020-09-21
  */
-public class ServerInventory {
+public class ServerInventory implements Serializable {
 
     private final Map<String, Double> userBudgets;
     private final Map<String, Item> inventoryCatalog;

@@ -1,5 +1,6 @@
 package replicaOne.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.Map;
 /**
  * Created by Kevin Tan 2020-09-20
  */
-public class Item {
+public class Item implements Serializable {
 
     private final String itemId;
     private String itemName;
