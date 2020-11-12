@@ -1,11 +1,11 @@
 package util;
 
-import jdk.internal.jline.internal.Nullable;
 import model.UDPRequestMessage;
 import model.UDPResponseMessage;
 import org.jgroups.Address;
 import org.jgroups.Message;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 
 public final class MessageUtil {
