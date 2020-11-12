@@ -11,7 +11,7 @@ import util.ReplicaUtil;
 import java.util.Stack;
 
 import static common.ReplicaConstants.CLIENT_RM_CLUSTER;
-import static common.ReplicaConstants.REPLACE_RM_CLUSTER;
+import static common.ReplicaConstants.REPLICA_RM_CLUSTER;
 import static model.RequestType.DATA_TRANSFER;
 import static util.MessageUtil.createMessageFor;
 import static util.ReplicaUtil.fetchAddressForDataTransfer;
@@ -38,7 +38,7 @@ public class ReplicaManager {
      */
     public void coldStart(String replicaOption) throws Exception {
         replicaName = replicaOption;
-        clientRMChannel.connect(REPLACE_RM_CLUSTER);
+        clientRMChannel.connect(REPLICA_RM_CLUSTER);
         replicaServer = ReplicaUtil.startReplica(name, replicaName, null);
         clientRMChannel.connect(CLIENT_RM_CLUSTER);
     }
