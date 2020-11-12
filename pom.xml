@@ -10,6 +10,12 @@
     </properties>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.jgroups/jgroups -->
+        <dependency>
+            <groupId>org.jgroups</groupId>
+            <artifactId>jgroups</artifactId>
+            <version>4.2.4.Final</version>
+        </dependency>
     </dependencies>
 
     <build>
