@@ -7,7 +7,8 @@ public final class ReplicaConstants {
 
     public static final String SEQUENCER_REPLICA_CLUSTER = "SequencerReplicaCluster";
     public static final String CLIENT_RM_CLUSTER = "ClientReplicaManagerCluster";
-    public static final String REPLACE_RM_CLUSTER = "ReplaceRMCluster";
+    public static final String REPLICA_RM_CLUSTER = "ReplicaRMCluster";
+    public static final String CLIENT_REPLICA_CLUSTER = "ClientReplicaCluster";
 
     public static final String QC_SERVER_NAME = "QC";
     public static final String BC_SERVER_NAME = "BC";

@@ -7,8 +7,7 @@ import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
 
-import static common.ReplicaConstants.REPLACE_RM_CLUSTER;
-import static common.ReplicaConstants.SEQUENCER_REPLICA_CLUSTER;
+import static common.ReplicaConstants.*;
 import static util.MessageUtil.messageToUDPRequest;
 
 public abstract class Replica {
@@ -16,6 +15,7 @@ public abstract class Replica {
     // Message channels
     protected final JChannel sequencerChannel;
     protected final JChannel rmReplicaChannel;
+    protected final JChannel replicaClientChannel;
 
     protected Long sequenceNumber;
     private final String name;
@@ -24,18 +24,22 @@ public abstract class Replica {
         this.name = name;
         sequencerChannel = new JChannel().setReceiver(sequenceHandler()).name(name);
         rmReplicaChannel = new JChannel().setReceiver(rmHandler()).name(name);
+        // We don't need a handle because it should only be a one-way communication
+        replicaClientChannel = new JChannel().name(name);
         sequenceNumber = 0L;
     }
 
     public Replica start() throws Exception {
         sequencerChannel.connect(SEQUENCER_REPLICA_CLUSTER);
-        rmReplicaChannel.connect(REPLACE_RM_CLUSTER);
+        rmReplicaChannel.connect(REPLICA_RM_CLUSTER);
+        replicaClientChannel.connect(CLIENT_REPLICA_CLUSTER);
         return this;
     }
 
     public void kill() {
         sequencerChannel.disconnect();
         rmReplicaChannel.disconnect();
+        replicaClientChannel.disconnect();
     }
 
     protected abstract void initReplicaStores();
