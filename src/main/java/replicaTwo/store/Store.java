@@ -1,6 +1,7 @@
 package replicaTwo.store;
 
-import replicaTwo.data.ReplicaData;
+import replica.data.ReplicaTwoData;
+import replicaTwo.data.inventory.Item;
 import replicaTwo.data.inventory.StoreInventory;
 import replicaTwo.data.sales.SalesManager;
 import replicaTwo.exception.*;
@@ -112,22 +113,22 @@ public class Store {
     private final SalesManager salesManager;
     private final RequestDispatcher requestDispatcher;
 
-    public Store(String locationName, ReplicaData replicaData, Map<String, Integer> portsConfig) {
+    public Store(String locationName, ReplicaTwoData replicaTwoData, Map<String, Integer> portsConfig) {
         super();
         this.locationName = locationName;
-        this.inventory = replicaData.getInventoryOnLocation(this.locationName);
-        this.salesManager = replicaData.getSalesManagerOnLocation(this.locationName);
+        this.inventory = replicaTwoData.getInventoryOnLocation(this.locationName);
+        this.salesManager = replicaTwoData.getSalesManagerOnLocation(this.locationName);
         this.requestDispatcher = new RequestDispatcherUDP(this.locationName, portsConfig);
     }
 
-    public String addItem(String managerID, String itemID, String itemName, int quantity, int price) throws ManagerItemPriceMismatchException {
+    public Item addItem(String managerID, String itemID, String itemName, int quantity, int price) throws ManagerItemPriceMismatchException {
         if(this.inventory.isItemPriceMismatch(itemID, price)) {
             throw new ManagerItemPriceMismatchException("Add item failed. item price does not match");
         }
 
         this.inventory.addItemToStock(itemID, itemName, quantity, price);
         this.automaticallyAssignItem(itemID);
-        return this.inventory.getItemDescription(itemID);
+        return this.inventory.getItem(itemID);
     }
 
     public String removeItem(String managerID, String itemID, int quantity) throws ManagerRemoveBeyondQuantityException, ManagerRemoveNonExistingItemException {
@@ -138,13 +139,14 @@ public class Store {
         if(!this.inventory.isEnoughItemQuantity(itemID, quantity)) {
             throw new ManagerRemoveBeyondQuantityException("Can not remove beyond the quantity.");
         }
+        String itemName = this.inventory.getItemName(itemID);
 
         if(quantity < 0) {
             this.inventory.removeItemFromStock(itemID);
         } else {
             this.inventory.reduceItemQuantityInStock(itemID, quantity);
         }
-        return this.inventory.getItemDescription(itemID);
+        return itemName;
     }
 
     public String listItemAvailability(String managerID) {
@@ -172,7 +174,7 @@ public class Store {
     public String findItem(String customerID, String itemName) {
         List<String> collectedItems = new ArrayList<>(this.inventory.getStockByName(itemName));
         collectedItems.addAll(this.requestDispatcher.broadcastCollect(Arrays.asList(FIND_ITEM, itemName)));
-        return String.join(" ", collectedItems);
+        return String.join(", ", collectedItems);
     }
 
     public String returnItem(String customerID, String itemID, String dateOfReturn) throws CustomerNeverPurchasedItemException, ReturnPolicyException {

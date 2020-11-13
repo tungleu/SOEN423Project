@@ -7,6 +7,8 @@ import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
 
+import java.io.IOException;
+
 import static common.ReplicaConstants.*;
 import static util.MessageUtil.messageToUDPRequest;
 
@@ -42,7 +44,7 @@ public abstract class Replica {
         replicaClientChannel.disconnect();
     }
 
-    protected abstract void initReplicaStores();
+    protected abstract void initReplicaStores() throws IOException;
 
     protected abstract void redirectRequestToStore(OperationRequest operationRequest);
 

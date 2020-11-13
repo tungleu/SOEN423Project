@@ -1,6 +1,7 @@
 package replicaTwo.store;
 
-import replicaTwo.data.ReplicaData;
+import replica.data.ReplicaTwoData;
+import replicaTwo.data.inventory.Item;
 import replicaTwo.exception.*;
 
 import java.io.IOException;
@@ -8,6 +9,8 @@ import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
+
+import static common.OperationResponse.*;
 
 public class StoreProxy {
     private enum UserRole {
@@ -31,64 +34,62 @@ public class StoreProxy {
         this.logger = null;
     }
 
-    public StoreProxy(String locationName, ReplicaData replicaData, Map<String, Integer> portsConfig) {
+    public StoreProxy(String locationName, ReplicaTwoData replicaTwoData, Map<String, Integer> portsConfig) {
         super();
         this.logger = Logger.getLogger(locationName);
-        this.store = new Store(locationName, replicaData, portsConfig);
+        this.store = new Store(locationName, replicaTwoData, portsConfig);
         this.locationName = locationName;
     }
 
-    public String addItem(String managerID, String itemID, String itemName, int quantity, int price) throws IncorrectUserRoleException, ManagerExternalStoreItemException, ManagerItemPriceMismatchException {
+    public String addItem(String managerID, String itemID, String itemName, int quantity, int price) throws IncorrectUserRoleException {
         try {
             this.validateUser(managerID, UserRole.M);
             this.validateItem(managerID, itemID);
-            String itemDescription = this.store.addItem(managerID, itemID, itemName, quantity, price);
-            this.logger.info("Successfully added item. " + itemDescription);
-            return itemDescription;
+            Item item = this.store.addItem(managerID, itemID, itemName, quantity, price);
+            String operationResult = String.format(ADD_ITEM_SUCCESS, item.getItemName(), item.getItemID(), item.getQuantity(), item.getPrice());
+            this.logger.info(operationResult);
+            return operationResult;
         }  catch (ManagerItemPriceMismatchException e) {
-            this.logger.info("Manager with ID: " + managerID + " tried to add an item with ID : " + itemID + "," +
-                    " but the price does not match.");
-            throw new ManagerItemPriceMismatchException(e.getMessage());
+            String priceMismatch = String.format(ADD_ITEM_INVALID_PRICE, price);
+            this.logger.info(priceMismatch);
+            return priceMismatch;
+        } catch(ManagerExternalStoreItemException e) {
+            String externalStore = String.format(ADD_ITEM_ANOTHER_STORE, itemName);
+            this.logger.severe(externalStore);
+            return externalStore;
         } catch(IncorrectUserRoleException e) {
             this.logger.severe("Permission alert! Customer with ID: " + managerID +
                     " was trying add an item: ");
             throw new IncorrectUserRoleException(e.getMessage());
-        } catch(ManagerExternalStoreItemException e) {
-            this.logger.severe("Permission alert! Manager with ID: " + managerID + " " +
-                    "was trying to add an item " + itemID + " which belongs to a different store.");
-            throw new ManagerExternalStoreItemException(e.getMessage());
         }
     }
 
-    public String removeItem(String managerID, String itemID, int quantity) throws IncorrectUserRoleException, ManagerExternalStoreItemException,
-            ManagerRemoveBeyondQuantityException, ManagerRemoveNonExistingItemException
+    public String removeItem(String managerID, String itemID, int quantity) throws IncorrectUserRoleException
     {
         try {
             this.validateUser(managerID, UserRole.M);
             this.validateItem(managerID, itemID);
-            String itemDescription = this.store.removeItem(managerID, itemID, quantity);
-            this.logger.info("Manager with ID: " + managerID + " removed " + quantity + "" +
-                    " units from an item. " + itemDescription);
-            return itemDescription;
+            String itemName = this.store.removeItem(managerID, itemID, quantity);
+            String operationResult = String.format(REMOVE_ITEM_SUCCESS, itemID, itemName);
+            this.logger.info(operationResult);
+            return operationResult;
         } catch(ManagerRemoveNonExistingItemException e) {
-            String msg = quantity == -1 ? "completely remove" : "remove " + quantity + " units from";
-            this.logger.info("Manager with ID: " + managerID + " was trying to " +
-                    "" + msg + " an item with ID: " + itemID + "" +
-                    ", but such an item does not exists in a store.");
-            throw new ManagerRemoveNonExistingItemException(e.getMessage());
+            String itemNotExist = String.format(REMOVE_ITEM_NOT_EXISTS, itemID);
+            this.logger.info(itemNotExist);
+            return itemNotExist;
         } catch (ManagerRemoveBeyondQuantityException e) {
-            this.logger.info("Manager with ID: " + managerID + " was trying to remove more quantity than exists in a store " +
-                    "for the item with ID: " + itemID);
-            throw new ManagerRemoveBeyondQuantityException(e.getMessage());
+            String beyondQuantity = String.format(REMOVE_ITEM_BEYOND_QUANTITY, quantity, itemID);
+            this.logger.info(beyondQuantity);
+            return beyondQuantity;
+        }catch(ManagerExternalStoreItemException e) {
+            String externalStore = String.format(REMOVE_ITEM_ANOTHER_STORE, itemID);
+            this.logger.severe(externalStore);
+            return externalStore;
         } catch(IncorrectUserRoleException e) {
             String msg = quantity == -1 ? "completely remove" : "remove " + quantity + " units from";
             this.logger.severe("Permission alert! Customer with ID: " + managerID +
                     " was trying to " + msg + " an item with ID: " + itemID);
             throw new IncorrectUserRoleException(e.getMessage());
-        } catch(ManagerExternalStoreItemException e) {
-            this.logger.severe("Permission alert! Manager with ID: " + managerID + " " +
-                    "was trying to remove item " + itemID + " which belongs to a different store.");
-            throw new ManagerExternalStoreItemException(e.getMessage());
         }
     }
 
@@ -100,31 +101,32 @@ public class StoreProxy {
                     " was trying to list available items in the store.");
             throw new IncorrectUserRoleException(e.getMessage());
         }
-        this.logger.info("Manager with ID: " + managerID + " requested a list of available items.");
-        return this.store.listItemAvailability(managerID);
+        String itemList = this.store.listItemAvailability(managerID);
+        String operationResult = String.format("{%s}", itemList);
+        this.logger.info(operationResult);
+        return operationResult;
     }
 
-    public String purchaseItem(String customerID, String itemID, String dateOfPurchase)throws IncorrectUserRoleException,
-            ItemOutOfStockException, NotEnoughFundsException, ExternalStorePurchaseLimitException {
+    public String purchaseItem(String customerID, String itemID, String dateOfPurchase)throws IncorrectUserRoleException
+    {
         try {
             this.validateUser(customerID, UserRole.U);
-            String purchaseResult = this.store.purchaseItem(customerID, itemID, dateOfPurchase);
-            this.logger.info("Customer with ID: " + customerID + " successfully purchased an item with ID: " + itemID + "" +
-                    " on " + dateOfPurchase + ".");
+            this.store.purchaseItem(customerID, itemID, dateOfPurchase);
+            String purchaseResult = String.format(PURCHASE_ITEM_SUCCESS, itemID);
+            this.logger.info(purchaseResult);
             return purchaseResult;
         } catch(ItemOutOfStockException e) {
-            this.logger.info("Customer with ID: " + customerID + " attempted to purchase an item with ID:" +
-                    " " + itemID + " on " + dateOfPurchase + ", but such an item is out of stock.");
-            throw new ItemOutOfStockException(e.getMessage());
+            String outOfStock = String.format(PURCHASE_ITEM_OUT_OF_STOCK, itemID);
+            this.logger.info(outOfStock);
+            return outOfStock;
         } catch(NotEnoughFundsException e) {
-            this.logger.info("Customer with ID: " + customerID + " attempted to purchase an item with" +
-                    " ID: " + itemID + " on " + dateOfPurchase + ", but does not have enough funds.");
-            throw new NotEnoughFundsException(e.getMessage());
+            String notEnoughFunds = String.format(PURCHASE_ITEM_NOT_ENOUGH_FUNDS, itemID);
+            this.logger.info(notEnoughFunds);
+            return notEnoughFunds;
         } catch(ExternalStorePurchaseLimitException e) {
-            this.logger.info("Customer with ID: " + customerID + " attempted to purchase an item with" +
-                    " ID: " + itemID + " on " + dateOfPurchase + ", but he/she already made purchase from " +
-                    "" + itemID.substring(0, 2) + " store.");
-            throw new ExternalStorePurchaseLimitException(e.getMessage());
+            String externalStoreLimit = String.format(PURCHASE_ITEM_ANOTHER_STORE_LIMIT, itemID);
+            this.logger.info(externalStoreLimit);
+            return externalStoreLimit;
         } catch (IncorrectUserRoleException e) {
             this.logger.severe("Permission alert! Manager with ID: " + customerID + "" +
                     " was trying to purchase an item with ID: " + itemID + " on " + dateOfPurchase);
@@ -140,74 +142,71 @@ public class StoreProxy {
                     "was trying to find items with " + itemName + " name.");
             throw new IncorrectUserRoleException(e.getMessage());
         }
-        String result = this.store.findItem(customerID, itemName);
-        this.logger.info("Customer with ID: " + customerID + " requested to find all items based on " + itemName + " name.");
-        return result;
+        String collectedItems = this.store.findItem(customerID, itemName);
+        String operationResult = String.format("%s: {%s}", itemName, collectedItems);
+        this.logger.info(operationResult);
+        return operationResult;
     }
 
-    public String returnItem(String customerID, String itemID, String dateOfReturn) throws ReturnPolicyException,
-            CustomerNeverPurchasedItemException, IncorrectUserRoleException {
+    public String returnItem(String customerID, String itemID, String dateOfReturn) throws IncorrectUserRoleException {
         try {
             this.validateUser(customerID, UserRole.U);
-            String returnStatus = this.store.returnItem(customerID, itemID, dateOfReturn);
-            this.logger.info("Successfully returned item with ID: " + itemID + " purchased by the customer " +
-                    "with ID: " + customerID + " on " + dateOfReturn);
-            return returnStatus;
+            this.store.returnItem(customerID, itemID, dateOfReturn);
+            String operationResult = String.format(RETURN_ITEM_SUCCESS, itemID);
+            this.logger.info(operationResult);
+            return operationResult;
         } catch (ReturnPolicyException e) {
-            this.logger.info("Customer with ID: " + customerID + " tried to return an item with ID: " + itemID + "" +
-                    " , but it is beyond the return policy.");
-            throw new ReturnPolicyException(e.getMessage());
+            String policyError = String.format(RETURN_ITEM_POLICY_ERROR, itemID);
+            this.logger.info(policyError);
+            return policyError;
         } catch (CustomerNeverPurchasedItemException e) {
-            this.logger.info("Customer with ID: " + customerID + " tried to return an item with ID: " + itemID + "" +
-                    " , but the customer never purchased such an item.");
-            throw new CustomerNeverPurchasedItemException(e.getMessage());
+            String neverPurchased = String.format(RETURN_ITEM_CUSTOMER_NEVER_PURCHASED, itemID);
+            this.logger.info(neverPurchased);
+            return neverPurchased;
         } catch (IncorrectUserRoleException e) {
             this.logger.severe("Permission alert! Manager with ID: " + customerID + " was trying to return an item" +
                     " with ID: " + itemID);
             throw new IncorrectUserRoleException(e.getMessage());
         }
-
     }
 
-    public String addCustomerToWaitQueue(String customerID, String itemID) {
-        return this.store.addCustomerToWaitQueue(customerID, itemID);
+    public String addWaitList(String customerID, String itemID) {
+        this.store.addCustomerToWaitQueue(customerID, itemID);
+        return String.format(ADD_WAIT_LIST, customerID);
     }
 
-    public String exchangeItem(String customerID, String newItemID, String oldItemID, String dateOfExchange) throws ReturnPolicyException,
-            CustomerNeverPurchasedItemException, ExternalStorePurchaseLimitException, ItemOutOfStockException, NotEnoughFundsException, IncorrectUserRoleException {
+    public String exchangeItem(String customerID, String newItemID, String oldItemID, String dateOfExchange) throws IncorrectUserRoleException {
         try {
             this.validateUser(customerID, UserRole.U);
-            String exchangeStatus = this.store.exchangeItem(customerID, newItemID, oldItemID, dateOfExchange);
-            this.logger.info("Customer with ID: " + customerID + " has successfully exchanged an item with ID: " + oldItemID + "" +
-                    " for an item with ID: " + newItemID + " on " + dateOfExchange);
+            this.store.exchangeItem(customerID, newItemID, oldItemID, dateOfExchange);
+            String exchangeStatus = String.format(EXCHANGE_ITEM_SUCCESS, oldItemID, newItemID);
+            this.logger.info(exchangeStatus);
             return exchangeStatus;
         }  catch (ReturnPolicyException e) {
-            this.logger.info("Customer with ID: " + customerID + " tried to exchange an item with ID: " + oldItemID + "" +
-                    " , for a new item with ID: " + newItemID + ", but it is beyond the return policy.");
-            throw new ReturnPolicyException(e.getMessage());
+            String policyError = String.format(EXCHANGE_ITEM_POLICY_ERROR, oldItemID);
+            this.logger.info(policyError);
+            return policyError;
         } catch (CustomerNeverPurchasedItemException e) {
-            this.logger.info("Customer with ID: " + customerID + " tried to return an item with ID: " + oldItemID + "" +
-                    " , but the customer never purchased such an item.");
-            throw new CustomerNeverPurchasedItemException(e.getMessage());
+            String neverPurchased = String.format(EXCHANGE_ITEM_CUSTOMER_NEVER_PURCHASED, oldItemID);
+            this.logger.info(neverPurchased);
+            return neverPurchased;
         } catch(ExternalStorePurchaseLimitException e) {
-            this.logger.info("Customer with ID: " + customerID + " attempted to exchange an item with" +
-                    " ID: " + oldItemID + " on " + dateOfExchange + " for an item with ID: " + newItemID + ", but he/she already made purchase from " +
-                    "" + newItemID.substring(0, 2) + " store.");
-            throw new ExternalStorePurchaseLimitException(e.getMessage());
+            String externalStoreLimit = String.format(EXCHANGE_ITEM_ANOTHER_STORE_LIMIT, oldItemID, newItemID);
+            this.logger.info(externalStoreLimit);
+            return externalStoreLimit;
         } catch(ItemOutOfStockException e) {
-            this.logger.info("Customer with ID: " + customerID + " attempted to exchange an item with ID:" +
-                    " " + oldItemID + " on " + dateOfExchange + " for an item with ID: " + newItemID + ", but such an item is out of stock.");
-            throw new ItemOutOfStockException(e.getMessage());
+            String itemOutOfStock = String.format(EXCHANGE_ITEM_OUT_OF_STOCK, oldItemID, newItemID, newItemID);
+            this.logger.info(itemOutOfStock);
+            return itemOutOfStock;
         } catch(NotEnoughFundsException e) {
-            this.logger.info("Customer with ID: " + customerID + " attempted to exchange an item with" +
-                    " ID: " + oldItemID + " on " + dateOfExchange + " for an item with ID: " + newItemID + ", but does not have enough funds.");
-            throw new NotEnoughFundsException(e.getMessage());
+            String outOfFunds = String.format(EXCHANGE_ITEM_NOT_ENOUGH_FUNDS, oldItemID, newItemID, customerID);
+            this.logger.info(outOfFunds);
+            return outOfFunds;
         } catch (IncorrectUserRoleException e) {
             this.logger.severe("Permission alert! Manager with ID: " + customerID + " was trying to exchange an item" +
                     " with ID: " + oldItemID + " to a new item with ID: " + newItemID + " on " + dateOfExchange);
             throw new IncorrectUserRoleException(e.getMessage());
         }
-
     }
 
     public void initializeStore(int port) throws IOException {

@@ -13,6 +13,7 @@ public final class ReplicaConstants {
     public static final String QC_SERVER_NAME = "QC";
     public static final String BC_SERVER_NAME = "BC";
     public static final String ON_SERVER_NAME = "ON";
+    public static final String[] SERVER_NAMES = {QC_SERVER_NAME, BC_SERVER_NAME, ON_SERVER_NAME};
 
     public static final String REPLICA_MANAGER_ONE = "ReplicaManagerOne";
     public static final String REPLICA_MANAGER_TWO = "ReplicaManagerTwo";

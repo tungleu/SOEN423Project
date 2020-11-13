@@ -1,10 +1,11 @@
 package replicaTwo.data.inventory;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class StoreInventory {
+public class StoreInventory implements Serializable {
     private final ConcurrentHashMap<String, Item> items;
 
     public StoreInventory() {
@@ -68,6 +69,10 @@ public class StoreInventory {
     public String getStock() {
         return this.items.values().stream()
                 .map(Item::toString)
-                .collect(Collectors.joining(" "));
+                .collect(Collectors.joining(", "));
+    }
+
+    public Item getItem(String itemID) {
+        return this.items.get(itemID);
     }
 }
