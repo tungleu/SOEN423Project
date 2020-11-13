@@ -1,17 +1,18 @@
-package replicaTwo.data;
+package replica.data;
 
 import replicaTwo.data.inventory.StoreInventoryPool;
 import replicaTwo.data.inventory.StoreInventory;
 import replicaTwo.data.sales.SalesManager;
 import replicaTwo.data.sales.SalesManagerPool;
 
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ReplicaData {
-    private ConcurrentHashMap<String, StoreInventory> inventories;
-    private ConcurrentHashMap<String, SalesManager> salesManagers;
+public class ReplicaTwoData implements Serializable {
+    private final ConcurrentHashMap<String, StoreInventory> inventories;
+    private final ConcurrentHashMap<String, SalesManager> salesManagers;
 
-    public ReplicaData() {
+    public ReplicaTwoData() {
         this.inventories = new ConcurrentHashMap<>(StoreInventoryPool.getInventoryPool());
         this.salesManagers = new ConcurrentHashMap<>(SalesManagerPool.getManagersPool());
     }

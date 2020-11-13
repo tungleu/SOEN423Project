@@ -39,16 +39,12 @@ public class Item implements Serializable {
     }
 
     public String toStringByName() {
-        return this.itemID + " " + this.quantity + " " + this.price;
+        return String.format("(itemId:%s, quantity:%d, price:%d)", this.itemID, this.quantity, this.price);
     }
 
     @Override
     public String toString() {
-        return "Item{" +
-                "itemID='" + itemID + '\'' +
-                ", itemName='" + itemName + '\'' +
-                ", quantity=" + quantity +
-                ", price=" + price +
-                '}';
+        return String.format("(itemName:%s, itemId:%s, quantity:%d, price:%d)",
+                this.itemName, this.itemID, this.quantity, this.price);
     }
 }

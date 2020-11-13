@@ -1,10 +1,11 @@
 package replicaTwo.data.sales;
 
+import java.io.Serializable;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class SalesManager {
+public class SalesManager implements Serializable {
     private static final int CUSTOMER_BUDGET = 1000;
     private final ConcurrentHashMap<String, Integer> customerBudget;
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> customerWithExternalStores;
