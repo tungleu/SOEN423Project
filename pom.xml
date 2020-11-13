@@ -22,6 +22,12 @@
             <artifactId>guava</artifactId>
             <version>30.0-jre</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.glassfish.corba/glassfish-corba-omgapi -->
+        <dependency>
+            <groupId>org.glassfish.corba</groupId>
+            <artifactId>glassfish-corba-omgapi</artifactId>
+            <version>4.2.2</version>
+        </dependency>
     </dependencies>
 
     <build>

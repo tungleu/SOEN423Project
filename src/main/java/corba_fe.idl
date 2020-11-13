@@ -1,0 +1,14 @@
+module CORBA_FE
+{
+  interface FrontEnd
+  {
+  wstring addItem(in wstring managerID, in wstring itemID, in wstring itemName, in long quantity, in long price);
+  wstring removeItem(in wstring managerID, in wstring itemID, in long quantity);
+  wstring listItemAvailability(in wstring managerID);
+  wstring purchaseItem(in wstring customerID, in wstring itemID, in wstring dateOfPurchase);
+  wstring findItem(in wstring customerID, in wstring itemName);
+  wstring returnItem(in wstring customerID, in wstring itemID, in wstring dateOfReturn);
+  wstring exchangeItem(in wstring customerID, in wstring newitemID, in wstring oldItemID, in wstring dateOfExchange);
+  wstring addWaitList(in wstring customerID, in wstring itemID);
+  };
+};
