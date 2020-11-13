@@ -10,5 +10,6 @@ module CORBA_FE
   wstring returnItem(in wstring customerID, in wstring itemID, in wstring dateOfReturn);
   wstring exchangeItem(in wstring customerID, in wstring newitemID, in wstring oldItemID, in wstring dateOfExchange);
   wstring addWaitList(in wstring customerID, in wstring itemID);
+  wstring killReplica(in long replica);
   };
 };
