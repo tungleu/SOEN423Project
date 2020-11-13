@@ -5,20 +5,23 @@ import java.util.List;
 public class OperationRequest extends UDPRequestMessage {
 
     private final String corbaClient;
-    private final Long sequenceNumber;
+    private long sequenceNumber;
 
-    public OperationRequest(RequestType requestType, List<String> parameters, String checksum, String pid, String corbaClient,
-                            Long sequenceNumber) {
-        super(requestType, parameters, checksum, pid);
+    public OperationRequest(RequestType requestType, List<String> parameters, String checksum, String corbaClient) {
+        super(requestType, parameters, checksum);
         this.corbaClient = corbaClient;
-        this.sequenceNumber = sequenceNumber;
+        this.sequenceNumber = 0;
     }
 
     public String getCorbaClient() {
         return corbaClient;
     }
 
-    public Long getSequenceNumber() {
+    public long getSequenceNumber() {
         return sequenceNumber;
+    }
+
+    public void setSequenceNumber(long sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
 }

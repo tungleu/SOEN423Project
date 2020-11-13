@@ -10,7 +10,6 @@ public enum RequestType {
     EXCHANGE_ITEM,
     ADD_WAIT_LIST,
     DATA_TRANSFER,
-    HEALTH_CHECK,
     MISSING_MESSAGE,
     FAILURE,
     FAILURE_AGREEMENT

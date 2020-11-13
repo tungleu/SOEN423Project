@@ -9,6 +9,7 @@ public final class ReplicaConstants {
     public static final String CLIENT_RM_CLUSTER = "ClientReplicaManagerCluster";
     public static final String REPLICA_RM_CLUSTER = "ReplicaRMCluster";
     public static final String CLIENT_REPLICA_CLUSTER = "ClientReplicaCluster";
+    public static final String CLIENT_SEQUENCER_CLUSTER = "ClientSequencerCluster";
 
     public static final String QC_SERVER_NAME = "QC";
     public static final String BC_SERVER_NAME = "BC";
@@ -24,4 +25,6 @@ public final class ReplicaConstants {
     public static final String REPLICA_TWO = "ReplicaTwo";
     public static final String REPLICA_THREE = "ReplicaThree";
     public static final String[] REPLICA_NAMES = {REPLICA_ONE, REPLICA_TWO, REPLICA_THREE};
+
+    public static final String SEQUENCER_NAME = "Sequencer";
 }

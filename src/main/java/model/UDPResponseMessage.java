@@ -1,25 +1,23 @@
 package model;
 
+import util.ChecksumUtil;
+
 import java.io.Serializable;
 
 public class UDPResponseMessage implements Serializable {
 
-    private final String sender;
     private final String responseType;
-    private final Serializable response;
+    private Serializable response;
     private final String checksum;
-    private final String pid;
 
-    public UDPResponseMessage(String sender, String responseType, Serializable response, String checksum, String pid) {
-        this.sender = sender;
-        this.responseType = responseType;
+    public UDPResponseMessage(String responseType, Serializable response) {
+        this(responseType);
         this.response = response;
-        this.checksum = checksum;
-        this.pid = pid;
     }
 
-    public String getSender() {
-        return sender;
+    public UDPResponseMessage(String responseType) {
+        this.responseType = responseType;
+        this.checksum = ChecksumUtil.generateChecksumSHA256(responseType);
     }
 
     public String getResponseType() {
@@ -34,7 +32,4 @@ public class UDPResponseMessage implements Serializable {
         return checksum;
     }
 
-    public String getPid() {
-        return pid;
-    }
 }
