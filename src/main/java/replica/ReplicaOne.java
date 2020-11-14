@@ -1,6 +1,6 @@
 package replica;
 
-import model.OperationRequest;
+import common.StoreStrategy;
 import model.UDPRequestMessage;
 import org.jgroups.Address;
 import org.jgroups.Message;
@@ -24,8 +24,9 @@ public class ReplicaOne extends Replica {
     }
 
     @Override
-    protected void redirectRequestToStore(OperationRequest operationRequest) {
+    protected StoreStrategy fetchStore(String targetStore) {
         // TODO(#23): Handling Sequencer requests for Kevin's codebase
+        return null;
     }
 
     @Override

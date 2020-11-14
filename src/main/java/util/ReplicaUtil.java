@@ -1,7 +1,5 @@
 package util;
 
-import org.jgroups.Address;
-import org.jgroups.JChannel;
 import org.jgroups.Message;
 import replica.ReplicaOne;
 import replica.ReplicaTwo;
@@ -27,21 +25,15 @@ public final class ReplicaUtil {
         return null;
     }
 
-    public static Address fetchAddressForDataTransfer(String rmName, String replicaName, JChannel channel) {
-        return channel.view().getMembers().stream().filter(address -> {
-            String name = address.toString();
-            return name.contains(replicaName) && !name.contains(rmName);
-        }).findFirst().get();
-    }
-
     public static Replica startReplica(String replicaManager, String replica, @Nullable Message message) throws Exception {
         // TODO(#14): Add other code bases for replica and their corresponding data fetch
+        String name = replicaManager + replica;
         switch (replica) {
             case REPLICA_TWO:
-                return new ReplicaTwo(replicaManager + replica, fetchReplicaTwoData(message)).start();
+                return new ReplicaTwo(name, fetchReplicaTwoData(message)).start();
             case REPLICA_THREE:
             default:
-                return new ReplicaOne(replicaManager + replica, fetchReplicaOneData(message)).start();
+                return new ReplicaOne(name, fetchReplicaOneData(message)).start();
         }
     }
 
@@ -55,7 +47,7 @@ public final class ReplicaUtil {
     }
 
     private static ReplicaTwoData fetchReplicaTwoData(@Nullable Message message) {
-        if(message == null) {
+        if (message == null) {
             return new ReplicaTwoData();
         }
         return new ReplicaTwoData(message.getObject());

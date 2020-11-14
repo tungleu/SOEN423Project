@@ -13,8 +13,8 @@ import java.util.Stack;
 import static common.ReplicaConstants.CLIENT_RM_CLUSTER;
 import static common.ReplicaConstants.REPLICA_RM_CLUSTER;
 import static model.RequestType.DATA_TRANSFER;
+import static util.AddressUtil.fetchAddressForDataTransfer;
 import static util.MessageUtil.createMessageFor;
-import static util.ReplicaUtil.fetchAddressForDataTransfer;
 
 public class ReplicaManager {
 

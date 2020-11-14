@@ -1,7 +1,6 @@
 package replica;
 
 import common.StoreStrategy;
-import model.OperationRequest;
 import model.UDPRequestMessage;
 import org.jgroups.Address;
 import org.jgroups.Message;
@@ -43,10 +42,8 @@ public class ReplicaTwo extends Replica  {
     }
 
     @Override
-    protected void redirectRequestToStore(OperationRequest operationRequest) {
-        String targetStore = MessageUtil.fetchTargetStore(operationRequest);
-        StoreStrategy store = this.stores.get(targetStore);
-        this.requestExecutor.execute(store, operationRequest);
+    protected StoreStrategy fetchStore(String targetStore) {
+        return stores.get(targetStore);
     }
 
     @Override
