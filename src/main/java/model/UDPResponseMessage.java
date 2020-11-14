@@ -6,18 +6,26 @@ import java.io.Serializable;
 
 public class UDPResponseMessage implements Serializable {
 
+    private final String sender;
     private final String responseType;
     private Serializable response;
     private final String checksum;
 
-    public UDPResponseMessage(String responseType, Serializable response) {
-        this(responseType);
+    public UDPResponseMessage(String sender, String responseType, Serializable response, String checksum, String pid) {
+        this.sender = sender;
+        this.responseType = responseType;
         this.response = response;
+        this.checksum = checksum;
     }
 
-    public UDPResponseMessage(String responseType) {
+    public UDPResponseMessage(String sender, String responseType) {
+        this.sender = sender;
         this.responseType = responseType;
         this.checksum = ChecksumUtil.generateChecksumSHA256(responseType);
+    }
+
+    public String getSender() {
+        return sender;
     }
 
     public String getResponseType() {
