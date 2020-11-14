@@ -77,7 +77,7 @@ public abstract class Replica {
     }
 
     private void maybeProcessRequest(OperationRequest operationRequest) {
-        if (operationRequest.getSequenceNumber().longValue() == sequenceNumber) {
+        if (operationRequest.getSequenceNumber() == sequenceNumber) {
             redirectRequestToStore(operationRequest);
             sequenceNumber++;
         }
