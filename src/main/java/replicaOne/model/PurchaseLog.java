@@ -11,9 +11,9 @@ public class PurchaseLog implements Serializable {
     private final String itemName;
     private final String itemId;
     private final Date date;
-    private final double price;
+    private final int price;
 
-    public PurchaseLog(String itemName, String itemId, Date date, double price) {
+    public PurchaseLog(String itemName, String itemId, Date date, int price) {
         this.itemName = itemName;
         this.itemId = itemId;
         this.date = date;
@@ -24,7 +24,7 @@ public class PurchaseLog implements Serializable {
         return date;
     }
 
-    public double getPrice() {
+    public int getPrice() {
         return price;
     }
 

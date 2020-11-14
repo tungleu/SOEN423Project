@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import static common.OperationResponse.LIST_ITEM_AVAILABILITY_SINGLE_SUCCESS;
+
 /**
  * Created by Kevin Tan 2020-09-20
  */
@@ -13,10 +15,10 @@ public class Item implements Serializable {
 
     private final String itemId;
     private String itemName;
-    private double price;
+    private int price;
     private int itemQuantity;
 
-    public Item(String itemId, String itemName, double price, int itemQuantity) {
+    public Item(String itemId, String itemName, int price, int itemQuantity) {
         this.itemId = itemId;
         this.itemName = itemName;
         this.price = price;
@@ -43,7 +45,7 @@ public class Item implements Serializable {
         this.itemName = itemName;
     }
 
-    public synchronized void setPrice(double price) {
+    public synchronized void setPrice(int price) {
         this.price = price;
     }
 
@@ -59,12 +61,12 @@ public class Item implements Serializable {
         return itemName;
     }
 
-    public double getPrice() {
+    public int getPrice() {
         return price;
     }
 
     @Override
     public String toString() {
-        return String.format("{Item: %s, Item Id: %s, Quantity: %d, Price: %.2f}", itemName, itemId, itemQuantity, price);
+        return String.format(LIST_ITEM_AVAILABILITY_SINGLE_SUCCESS, itemName, itemId, itemQuantity, price);
     }
 }
