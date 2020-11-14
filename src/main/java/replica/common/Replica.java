@@ -20,6 +20,7 @@ public abstract class Replica {
     protected final JChannel replicaClientChannel;
 
     protected Long sequenceNumber;
+    protected RequestExecutor requestExecutor;
     private final String name;
 
     public Replica(String name) throws Exception {
@@ -29,6 +30,7 @@ public abstract class Replica {
         // We don't need a handle because it should only be a one-way communication
         replicaClientChannel = new JChannel().name(name);
         sequenceNumber = 0L;
+        requestExecutor = new RequestExecutor();
     }
 
     public Replica start() throws Exception {

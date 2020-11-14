@@ -20,4 +20,8 @@ public final class MessageUtil {
         return new Message(dst, ob);
     }
 
+    public static String fetchTargetStore(UDPRequestMessage requestMessage) {
+        return requestMessage.getParameters().get(0).substring(0, 2);
+    }
+
 }
