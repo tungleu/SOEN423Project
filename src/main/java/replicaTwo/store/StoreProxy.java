@@ -1,5 +1,6 @@
 package replicaTwo.store;
 
+import common.StoreStrategy;
 import replica.data.ReplicaTwoData;
 import replicaTwo.data.inventory.Item;
 import replicaTwo.exception.*;
@@ -12,27 +13,10 @@ import java.util.logging.Logger;
 
 import static common.OperationResponse.*;
 
-public class StoreProxy {
-    private enum UserRole {
-        M('M'), U('U');
-        char role;
-        UserRole(char role) {
-            this.role = role;
-        }
-        public char getRole() {
-            return this.role;
-        }
-    }
-
+public class StoreProxy implements StoreStrategy {
     private final Store store;
     private final String locationName;
     private final Logger logger;
-
-    public StoreProxy(){
-        this.store = null;
-        this.locationName = "";
-        this.logger = null;
-    }
 
     public StoreProxy(String locationName, ReplicaTwoData replicaTwoData, Map<String, Integer> portsConfig) {
         super();
@@ -41,9 +25,9 @@ public class StoreProxy {
         this.locationName = locationName;
     }
 
-    public String addItem(String managerID, String itemID, String itemName, int quantity, int price) throws IncorrectUserRoleException {
+    @Override
+    public String addItem(String managerID, String itemID, String itemName, int quantity, int price) {
         try {
-            this.validateUser(managerID, UserRole.M);
             this.validateItem(managerID, itemID);
             Item item = this.store.addItem(managerID, itemID, itemName, quantity, price);
             String operationResult = String.format(ADD_ITEM_SUCCESS, item.getItemName(), item.getItemID(), item.getQuantity(), item.getPrice());
@@ -57,17 +41,13 @@ public class StoreProxy {
             String externalStore = String.format(ADD_ITEM_ANOTHER_STORE, itemName);
             this.logger.severe(externalStore);
             return externalStore;
-        } catch(IncorrectUserRoleException e) {
-            this.logger.severe("Permission alert! Customer with ID: " + managerID +
-                    " was trying add an item: ");
-            throw new IncorrectUserRoleException(e.getMessage());
         }
     }
 
-    public String removeItem(String managerID, String itemID, int quantity) throws IncorrectUserRoleException
+    @Override
+    public String removeItem(String managerID, String itemID, int quantity)
     {
         try {
-            this.validateUser(managerID, UserRole.M);
             this.validateItem(managerID, itemID);
             String itemName = this.store.removeItem(managerID, itemID, quantity);
             String operationResult = String.format(REMOVE_ITEM_SUCCESS, itemID, itemName);
@@ -85,32 +65,21 @@ public class StoreProxy {
             String externalStore = String.format(REMOVE_ITEM_ANOTHER_STORE, itemID);
             this.logger.severe(externalStore);
             return externalStore;
-        } catch(IncorrectUserRoleException e) {
-            String msg = quantity == -1 ? "completely remove" : "remove " + quantity + " units from";
-            this.logger.severe("Permission alert! Customer with ID: " + managerID +
-                    " was trying to " + msg + " an item with ID: " + itemID);
-            throw new IncorrectUserRoleException(e.getMessage());
         }
     }
 
-    public String listItemAvailability(String managerID) throws IncorrectUserRoleException {
-        try {
-            this.validateUser(managerID, UserRole.M);
-        } catch(IncorrectUserRoleException e) {
-            this.logger.severe("Permission alert! Customer with ID: " + managerID + "" +
-                    " was trying to list available items in the store.");
-            throw new IncorrectUserRoleException(e.getMessage());
-        }
+    @Override
+    public String listItemAvailability(String managerID) {
         String itemList = this.store.listItemAvailability(managerID);
         String operationResult = String.format("{%s}", itemList);
         this.logger.info(operationResult);
         return operationResult;
     }
 
-    public String purchaseItem(String customerID, String itemID, String dateOfPurchase)throws IncorrectUserRoleException
+    @Override
+    public String purchaseItem(String customerID, String itemID, String dateOfPurchase)
     {
         try {
-            this.validateUser(customerID, UserRole.U);
             this.store.purchaseItem(customerID, itemID, dateOfPurchase);
             String purchaseResult = String.format(PURCHASE_ITEM_SUCCESS, itemID);
             this.logger.info(purchaseResult);
@@ -127,30 +96,20 @@ public class StoreProxy {
             String externalStoreLimit = String.format(PURCHASE_ITEM_ANOTHER_STORE_LIMIT, itemID);
             this.logger.info(externalStoreLimit);
             return externalStoreLimit;
-        } catch (IncorrectUserRoleException e) {
-            this.logger.severe("Permission alert! Manager with ID: " + customerID + "" +
-                    " was trying to purchase an item with ID: " + itemID + " on " + dateOfPurchase);
-            throw new IncorrectUserRoleException(e.getMessage());
         }
     }
 
-    public String findItem(String customerID, String itemName) throws IncorrectUserRoleException {
-        try {
-            this.validateUser(customerID, UserRole.U);
-        } catch (IncorrectUserRoleException e) {
-            this.logger.severe("Permission alert! Manager with ID: " + customerID + " " +
-                    "was trying to find items with " + itemName + " name.");
-            throw new IncorrectUserRoleException(e.getMessage());
-        }
+    @Override
+    public String findItem(String customerID, String itemName) {
         String collectedItems = this.store.findItem(customerID, itemName);
         String operationResult = String.format("%s: {%s}", itemName, collectedItems);
         this.logger.info(operationResult);
         return operationResult;
     }
 
-    public String returnItem(String customerID, String itemID, String dateOfReturn) throws IncorrectUserRoleException {
+    @Override
+    public String returnItem(String customerID, String itemID, String dateOfReturn) {
         try {
-            this.validateUser(customerID, UserRole.U);
             this.store.returnItem(customerID, itemID, dateOfReturn);
             String operationResult = String.format(RETURN_ITEM_SUCCESS, itemID);
             this.logger.info(operationResult);
@@ -163,21 +122,18 @@ public class StoreProxy {
             String neverPurchased = String.format(RETURN_ITEM_CUSTOMER_NEVER_PURCHASED, itemID);
             this.logger.info(neverPurchased);
             return neverPurchased;
-        } catch (IncorrectUserRoleException e) {
-            this.logger.severe("Permission alert! Manager with ID: " + customerID + " was trying to return an item" +
-                    " with ID: " + itemID);
-            throw new IncorrectUserRoleException(e.getMessage());
         }
     }
 
+    @Override
     public String addWaitList(String customerID, String itemID) {
         this.store.addCustomerToWaitQueue(customerID, itemID);
         return String.format(ADD_WAIT_LIST, customerID);
     }
 
-    public String exchangeItem(String customerID, String newItemID, String oldItemID, String dateOfExchange) throws IncorrectUserRoleException {
+    @Override
+    public String exchangeItem(String customerID, String newItemID, String oldItemID, String dateOfExchange) {
         try {
-            this.validateUser(customerID, UserRole.U);
             this.store.exchangeItem(customerID, newItemID, oldItemID, dateOfExchange);
             String exchangeStatus = String.format(EXCHANGE_ITEM_SUCCESS, oldItemID, newItemID);
             this.logger.info(exchangeStatus);
@@ -202,23 +158,12 @@ public class StoreProxy {
             String outOfFunds = String.format(EXCHANGE_ITEM_NOT_ENOUGH_FUNDS, oldItemID, newItemID, customerID);
             this.logger.info(outOfFunds);
             return outOfFunds;
-        } catch (IncorrectUserRoleException e) {
-            this.logger.severe("Permission alert! Manager with ID: " + customerID + " was trying to exchange an item" +
-                    " with ID: " + oldItemID + " to a new item with ID: " + newItemID + " on " + dateOfExchange);
-            throw new IncorrectUserRoleException(e.getMessage());
         }
     }
 
     public void initializeStore(int port) throws IOException {
         this.store.listen(port);
         setupLogger();
-    }
-
-    private void validateUser(String userID, UserRole expectedRole) throws IncorrectUserRoleException {
-        char currentRole = userID.charAt(2);
-        if(currentRole != expectedRole.getRole()) {
-            throw new IncorrectUserRoleException("Invalid User ID");
-        }
     }
 
     private void validateItem(String managerID, String itemID) throws ManagerExternalStoreItemException {

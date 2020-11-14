@@ -4,8 +4,10 @@ import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import replica.ReplicaOne;
+import replica.ReplicaTwo;
 import replica.common.Replica;
 import replica.data.ReplicaOneData;
+import replica.data.ReplicaTwoData;
 import replicaOne.model.ServerInventory;
 
 import javax.annotation.Nullable;
@@ -36,6 +38,7 @@ public final class ReplicaUtil {
         // TODO(#14): Add other code bases for replica and their corresponding data fetch
         switch (replica) {
             case REPLICA_TWO:
+                return new ReplicaTwo(replicaManager + replica, fetchReplicaTwoData(message)).start();
             case REPLICA_THREE:
             default:
                 return new ReplicaOne(replicaManager + replica, fetchReplicaOneData(message)).start();
@@ -49,6 +52,13 @@ public final class ReplicaUtil {
         } else {
             return message.getObject();
         }
+    }
+
+    private static ReplicaTwoData fetchReplicaTwoData(@Nullable Message message) {
+        if(message == null) {
+            return new ReplicaTwoData();
+        }
+        return new ReplicaTwoData(message.getObject());
     }
 
 }

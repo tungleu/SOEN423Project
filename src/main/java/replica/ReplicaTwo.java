@@ -1,5 +1,6 @@
 package replica;
 
+import common.StoreStrategy;
 import model.OperationRequest;
 import model.UDPRequestMessage;
 import org.jgroups.Address;
@@ -7,6 +8,7 @@ import org.jgroups.Message;
 import replica.common.Replica;
 import replica.data.ReplicaTwoData;
 import replicaTwo.store.StoreProxy;
+import util.MessageUtil;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -42,11 +44,13 @@ public class ReplicaTwo extends Replica  {
 
     @Override
     protected void redirectRequestToStore(OperationRequest operationRequest) {
-
+        String targetStore = MessageUtil.fetchTargetStore(operationRequest);
+        StoreStrategy store = this.stores.get(targetStore);
+        this.requestExecutor.execute(store, operationRequest);
     }
 
     @Override
     protected Message handleDataTransferRequest(Address sender, UDPRequestMessage udpRequestMessage) {
-        return null;
+        return MessageUtil.createMessageFor(sender, this.replicaTwoData);
     }
 }

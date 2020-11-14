@@ -1,16 +1,26 @@
 package replicaTwo.data.sales;
 
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SalesManagerPool {
-    private final static ConcurrentHashMap<String, SalesManager> salesManagers = new ConcurrentHashMap<>();
+public class SalesManagerPool implements Serializable {
+    private final ConcurrentHashMap<String, SalesManager> salesManagers;
 
-    public static SalesManager getSalesManagerOnLocation(String managerLocation) {
+    public SalesManagerPool() {
+        this.salesManagers = new ConcurrentHashMap<>();
+    }
+
+    public SalesManagerPool(SalesManagerPool managerPool) {
+        this.salesManagers = new ConcurrentHashMap<>(managerPool.getSalesManagers());
+    }
+
+    public SalesManager getSalesManagerOnLocation(String managerLocation) {
         salesManagers.computeIfAbsent(managerLocation, k -> new SalesManager());
         return salesManagers.get(managerLocation);
     }
 
-    public static ConcurrentHashMap<String, SalesManager> getManagersPool() {
-        return salesManagers;
+    public ConcurrentHashMap<String, SalesManager> getSalesManagers() {
+        return this.salesManagers;
     }
+
 }
