@@ -11,7 +11,7 @@ public class UDPResponseMessage implements Serializable {
     private Serializable response;
     private final String checksum;
 
-    public UDPResponseMessage(String sender, String responseType, Serializable response, String checksum, String pid) {
+    public UDPResponseMessage(String sender, String responseType, Serializable response, String checksum) {
         this.sender = sender;
         this.responseType = responseType;
         this.response = response;
