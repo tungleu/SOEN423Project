@@ -8,14 +8,12 @@ public class UDPResponseMessage implements Serializable {
     private final String responseType;
     private final Serializable response;
     private final String checksum;
-    private final String pid;
 
-    public UDPResponseMessage(String sender, String responseType, Serializable response, String checksum, String pid) {
+    public UDPResponseMessage(String sender, String responseType, Serializable response, String checksum) {
         this.sender = sender;
         this.responseType = responseType;
         this.response = response;
         this.checksum = checksum;
-        this.pid = pid;
     }
 
     public String getSender() {
@@ -32,9 +30,5 @@ public class UDPResponseMessage implements Serializable {
 
     public String getChecksum() {
         return checksum;
-    }
-
-    public String getPid() {
-        return pid;
     }
 }
