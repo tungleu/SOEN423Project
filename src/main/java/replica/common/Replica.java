@@ -26,7 +26,6 @@ public abstract class Replica {
     protected final JChannel rmReplicaChannel;
     protected final JChannel replicaClientChannel;
 
-    protected Long sequenceNumber;
     private final String name;
 
     public Replica(String name) throws Exception {
@@ -35,7 +34,6 @@ public abstract class Replica {
         rmReplicaChannel = new JChannel().setReceiver(rmHandler()).name(name);
         // We don't need a handle because it should only be a one-way communication
         replicaClientChannel = new JChannel().name(name);
-        sequenceNumber = 0L;
     }
 
     public Replica start() throws Exception {
@@ -110,20 +108,8 @@ public abstract class Replica {
     private Receiver sequenceHandler() {
         return msg -> {
             OperationRequest operationRequest = (OperationRequest) messageToUDPRequest(msg);
-            maybeFetchMissingMessage(msg.src(), operationRequest);
-            maybeProcessRequest(operationRequest);
-        };
-    }
-
-    // TODO(#24): Re-requesting for missing messages
-    private void maybeFetchMissingMessage(Address sender, OperationRequest operationRequest) {
-    }
-
-    private void maybeProcessRequest(OperationRequest operationRequest) {
-        if (operationRequest.getSequenceNumber() == sequenceNumber) {
             redirectRequestToStore(operationRequest);
-            sequenceNumber++;
-        }
+        };
     }
 
     private void sendResponseToClient(OperationRequest operationRequest, String operationResponse) {

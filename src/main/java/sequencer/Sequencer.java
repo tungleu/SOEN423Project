@@ -2,16 +2,12 @@ package sequencer;
 
 import model.OperationRequest;
 import model.UDPRequestMessage;
-import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
 import util.MessageUtil;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -21,18 +17,17 @@ import static common.ReplicaConstants.*;
 import static util.MessageUtil.messageToUDPRequest;
 
 public class Sequencer {
+    private static final String SEQUENCER_LOG_MSG = "Received request from the Client %s to sequence %s operation";
     private final JChannel clientChannel;
     private final JChannel replicaChannel;
     private final AtomicLong sequenceNumber;
-    private final Map<Long, UDPRequestMessage> messageHistory;
     private final Logger logger;
 
     public Sequencer(String name) throws Exception {
         super();
         this.clientChannel = new JChannel().setReceiver(clientHandler()).name(name);
-        this.replicaChannel = new JChannel().setDiscardOwnMessages(true).setReceiver(replicaHandler()).name(name);
+        this.replicaChannel = new JChannel().name(name);
         this.sequenceNumber = new AtomicLong();
-        this.messageHistory = new ConcurrentHashMap<>();
         this.logger = Logger.getLogger(name);
     }
 
@@ -41,42 +36,21 @@ public class Sequencer {
         this.replicaChannel.connect(SEQUENCER_REPLICA_CLUSTER);
     }
 
-    private Receiver replicaHandler() {
-        return msg -> {
-            UDPRequestMessage requestMessage = messageToUDPRequest(msg);
-            Address src = msg.src();
-            long missingSeqNum = Long.parseLong(requestMessage.getParameters().get(0));
-            UDPRequestMessage missingOperation = this.messageHistory.get(missingSeqNum);
-
-            try {
-                this.replicaChannel.send(handleReplicaMessage(src, missingOperation));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        };
-    }
-
     private Receiver clientHandler() {
         return msg -> {
             OperationRequest operationRequest = (OperationRequest) messageToUDPRequest(msg);
-            this.processNewMessage(operationRequest);
-
+            operationRequest.setSequenceNumber(sequenceNumber.getAndIncrement());
+            this.logger.info(String.format(SEQUENCER_LOG_MSG, operationRequest.getCorbaClient(), operationRequest.getRequestType().name()));
             try {
-                this.replicaChannel.send(handleReplicaMessage(null, operationRequest));
+                this.replicaChannel.send(handleReplicaMessage(operationRequest));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         };
     }
 
-    // set dst -> null to multicast
-    private Message handleReplicaMessage(@Nullable Address dst, UDPRequestMessage operationRequest) {
-        return MessageUtil.createMessageFor(dst, operationRequest);
-    }
-
-    private void processNewMessage(OperationRequest operationRequest) {
-        operationRequest.setSequenceNumber(sequenceNumber.get());
-        this.messageHistory.putIfAbsent(sequenceNumber.getAndIncrement(), operationRequest);
+    private Message handleReplicaMessage(UDPRequestMessage operationRequest) {
+        return MessageUtil.createMessageFor(null, operationRequest);
     }
 
     public static void main(String[] args) throws Exception {

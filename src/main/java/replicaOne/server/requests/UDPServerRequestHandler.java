@@ -1,7 +1,7 @@
 package replicaOne.server.requests;
 
-import javafx.util.Pair;
 import replicaOne.model.Item;
+import replicaOne.model.Pair;
 import replicaOne.model.Request;
 import replicaOne.model.ServerInventory;
 import replicaOne.server.logger.ServerLogger;
