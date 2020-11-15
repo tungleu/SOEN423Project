@@ -1,7 +1,7 @@
 package replicaOne.server.util.inventory;
 
-import javafx.util.Pair;
 import replicaOne.model.Item;
+import replicaOne.model.Pair;
 import replicaOne.model.PurchaseLog;
 import replicaOne.model.ServerInventory;
 import replicaOne.server.logger.ServerLogger;
@@ -11,9 +11,7 @@ import replicaOne.server.util.user.UserBudgetUtil;
 
 import java.util.*;
 
-import static common.OperationResponse.ADD_WAIT_LIST;
-import static common.OperationResponse.EXCHANGE_ITEM_CUSTOMER_NEVER_PURCHASED;
-import static common.OperationResponse.EXCHANGE_ITEM_POLICY_ERROR;
+import static common.OperationResponse.*;
 import static replicaOne.server.util.IdUtil.getServerFromId;
 import static replicaOne.server.util.TimeUtil.generateTimestamp;
 import static replicaOne.server.util.TimeUtil.getDateNow;
