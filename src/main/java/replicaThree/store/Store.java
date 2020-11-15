@@ -2,6 +2,8 @@ package replicaThree.store;
 import common.StoreStrategy;
 import replicaThree.client.customerClient;
 import replicaThree.common.Province;
+import replicaThree.data.ServerData;
+
 import static common.OperationResponse.*;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -15,19 +17,22 @@ import java.util.logging.SimpleFormatter;
 
 public class Store implements StoreStrategy {
 
-    private Map<String, String> inventory = new HashMap<String, String>();
-    private Map<String, PriorityQueue<String>> waitlist = new HashMap<String, PriorityQueue<String>>();
-    private final Province province;
     private Logger logger = null;
-    private HashMap<String, customerClient> customerClients = new HashMap<String, customerClient>();
-    private HashMap<String, Integer> portMap = new HashMap<String, Integer>();
-    private ArrayList<String> purchaseLog = new ArrayList<String>();
-    public Store(Province province) throws IOException {
-        super();
-        this.province = province;
-        this.portMap.put("QC", 1111);
-        this.portMap.put("ON", 2222);
-        this.portMap.put("BC", 3333);
+    private Map<String, String> inventory;
+    private Map<String, PriorityQueue<String>> waitlist ;
+    private final Province province;
+    private HashMap<String, customerClient> customerClients ;
+    private HashMap<String, Integer> portMap;
+    private ArrayList<String> purchaseLog;
+    private ServerData serverData;
+    public Store(ServerData serverData) throws IOException {
+        this.serverData = serverData;
+        this.province = this.serverData.getProvince();
+        this.portMap = serverData.getPortMap();
+        this.purchaseLog = serverData.getPurchaseLog();
+        this.customerClients = serverData.getCustomerClients();
+        this.inventory = serverData.getInventory();
+        this.waitlist = serverData.getWaitlist();
         this.logger = this.startLogger();
         logger.info("Server " + this.province.toString()+ " has started");
     }
@@ -36,7 +41,7 @@ public class Store implements StoreStrategy {
         Logger logger = Logger.getLogger("ServerLog");
         FileHandler fh;
         try {
-            fh = new FileHandler("src/logs/ServerLogs/"+this.province.toString()+"_Server.log");
+            fh = new FileHandler("src/main/java/replicaThree/logs/"+this.province.toString()+"_Server.log");
             logger.addHandler(fh);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
