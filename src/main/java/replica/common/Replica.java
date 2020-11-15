@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
 
 import static common.OperationResponse.STRING_RESPONSE_TYPE;
 import static common.ReplicaConstants.*;
@@ -31,6 +34,7 @@ public abstract class Replica {
     protected final Map<String, StoreStrategy> storeMap;
 
     private final String name;
+    private final Logger logger;
 
     public Replica(String name) throws Exception {
         this.name = name;
@@ -39,13 +43,16 @@ public abstract class Replica {
         // We don't need a handle because it should only be a one-way communication
         replicaClientChannel = new JChannel().name(name);
         storeMap = new HashMap<>();
+        logger = Logger.getLogger(name);
     }
 
     public Replica start() throws Exception {
+        initLogger();
         initReplicaStores();
         sequencerChannel.connect(SEQUENCER_REPLICA_CLUSTER);
         rmReplicaChannel.connect(REPLICA_RM_CLUSTER);
         replicaClientChannel.connect(CLIENT_REPLICA_CLUSTER);
+        logger.info(String.format(LOG_REPLICA_START, name));
         return this;
     }
 
@@ -53,6 +60,7 @@ public abstract class Replica {
         sequencerChannel.disconnect();
         rmReplicaChannel.disconnect();
         replicaClientChannel.disconnect();
+        logger.info(String.format(LOG_REPLICA_KILL, name));
     }
 
     protected abstract void initReplicaStores() throws IOException;
@@ -60,6 +68,7 @@ public abstract class Replica {
     protected abstract Message handleDataTransferRequest(Address sender, UDPRequestMessage udpRequestMessage);
 
     private void redirectRequestToStore(OperationRequest operationRequest) {
+        logger.info(String.format(LOG_REPLICA_REQUEST_RECEIVED, name, operationRequest.toString()));
         List<String> params = operationRequest.getParameters();
         StoreStrategy store = storeMap.get(MessageUtil.fetchTargetStore(operationRequest));
 
@@ -94,11 +103,13 @@ public abstract class Replica {
                 response = "Unknown operation request";
         }
 
+        logger.info(String.format(LOG_REPLICA_REQUEST_RESULT, name, operationRequest.getSequenceNumber(), response));
         sendResponseToClient(operationRequest, response);
     }
 
     private Receiver rmHandler() {
         return msg -> {
+            logger.info(String.format(LOG_REPLICA_DATA_TRANSFER_REQUEST, name));
             Address src = msg.src();
             UDPRequestMessage udpRequestMessage = messageToUDPRequest(msg);
             try {
@@ -124,5 +135,11 @@ public abstract class Replica {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void initLogger() throws IOException {
+        String logFile = System.getProperty("user.dir") + "/src/main/java/replica/common/" + name + ".log";
+        Handler fileHandler =  new FileHandler(logFile, true);
+        this.logger.addHandler(fileHandler);
     }
 }
