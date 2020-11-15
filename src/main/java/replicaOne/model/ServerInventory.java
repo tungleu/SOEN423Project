@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ServerInventory implements Serializable {
 
-    private final Map<String, Double> userBudgets;
+    private final Map<String, Integer> userBudgets;
     private final Map<String, Item> inventoryCatalog;
     private final Map<String, Queue<String>> itemWaitList;
     private final Map<String, Map<String, List<PurchaseLog>>> userPurchaseLogs;
@@ -37,7 +37,7 @@ public class ServerInventory implements Serializable {
         return foreignCustomers;
     }
 
-    public Map<String, Double> getUserBudgets() {
+    public Map<String, Integer> getUserBudgets() {
         return userBudgets;
     }
 
