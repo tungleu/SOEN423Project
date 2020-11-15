@@ -24,4 +24,9 @@ public class OperationRequest extends UDPRequestMessage {
     public void setSequenceNumber(long sequenceNumber) {
         this.sequenceNumber = sequenceNumber;
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + ", corbaClient='" + corbaClient + ", sequenceNumber=" + sequenceNumber;
+    }
 }

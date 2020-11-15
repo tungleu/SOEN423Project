@@ -32,4 +32,8 @@ public class UDPRequestMessage implements Serializable {
         return checksum;
     }
 
+    @Override
+    public String toString() {
+        return "requestType=" + requestType + ", parameters=" + parameters;
+    }
 }
