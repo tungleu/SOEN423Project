@@ -1,6 +1,5 @@
 package replica;
 
-import common.StoreStrategy;
 import model.UDPRequestMessage;
 import org.jgroups.Address;
 import org.jgroups.Message;
@@ -9,19 +8,17 @@ import replica.data.ReplicaThreeData;
 import replicaThree.store.Store;
 import util.MessageUtil;
 
-import static common.ReplicaConstants.*;
 import java.io.IOException;
-import java.util.HashMap;
+
+import static common.ReplicaConstants.*;
 
 public class ReplicaThree extends Replica {
 
-    private final HashMap<String, Store> storeMap;
     private final ReplicaThreeData replicaThreeData;
+
     public ReplicaThree(String name, ReplicaThreeData replicaThreeData) throws Exception {
         super(name);
         this.replicaThreeData = replicaThreeData;
-        this.storeMap = new HashMap<>();
-        initReplicaStores();
     }
 
     @Override
@@ -47,11 +44,6 @@ public class ReplicaThree extends Replica {
         thread2.start();
         thread3.start();
 
-    }
-
-    @Override
-    protected StoreStrategy fetchStore(String targetStore) {
-        return this.storeMap.get(targetStore);
     }
 
     @Override
