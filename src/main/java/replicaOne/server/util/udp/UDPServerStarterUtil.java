@@ -12,12 +12,12 @@ import static replicaOne.server.util.TimeUtil.generateTimestamp;
 /**
  * Created by Kevin Tan 2020-09-21
  */
-final class UDPServerStarterUtil {
+public final class UDPServerStarterUtil {
 
     private UDPServerStarterUtil() {
     }
 
-    static void startUDPServer(int port, ServerInventory serverInventory, ServerLogger serverLogger) {
+    public static void startUDPServer(int port, ServerInventory serverInventory, ServerLogger serverLogger) {
         new Thread(() -> {
             try (DatagramSocket aSocket = new DatagramSocket(port)) {
                 UDPServerRequestHandler udpServerRequestHandler = new UDPServerRequestHandler(serverInventory, serverLogger);

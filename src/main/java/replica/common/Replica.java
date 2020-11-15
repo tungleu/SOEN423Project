@@ -12,7 +12,9 @@ import util.AddressUtil;
 import util.MessageUtil;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static common.OperationResponse.STRING_RESPONSE_TYPE;
 import static common.ReplicaConstants.*;
@@ -26,6 +28,8 @@ public abstract class Replica {
     protected final JChannel rmReplicaChannel;
     protected final JChannel replicaClientChannel;
 
+    protected final Map<String, StoreStrategy> storeMap;
+
     private final String name;
 
     public Replica(String name) throws Exception {
@@ -34,9 +38,11 @@ public abstract class Replica {
         rmReplicaChannel = new JChannel().setReceiver(rmHandler()).name(name);
         // We don't need a handle because it should only be a one-way communication
         replicaClientChannel = new JChannel().name(name);
+        storeMap = new HashMap<>();
     }
 
     public Replica start() throws Exception {
+        initReplicaStores();
         sequencerChannel.connect(SEQUENCER_REPLICA_CLUSTER);
         rmReplicaChannel.connect(REPLICA_RM_CLUSTER);
         replicaClientChannel.connect(CLIENT_REPLICA_CLUSTER);
@@ -51,13 +57,11 @@ public abstract class Replica {
 
     protected abstract void initReplicaStores() throws IOException;
 
-    protected abstract StoreStrategy fetchStore(String targetStore);
-
     protected abstract Message handleDataTransferRequest(Address sender, UDPRequestMessage udpRequestMessage);
 
     private void redirectRequestToStore(OperationRequest operationRequest) {
         List<String> params = operationRequest.getParameters();
-        StoreStrategy store = fetchStore(MessageUtil.fetchTargetStore(operationRequest));
+        StoreStrategy store = storeMap.get(MessageUtil.fetchTargetStore(operationRequest));
 
         String response;
         switch (operationRequest.getRequestType()) {
