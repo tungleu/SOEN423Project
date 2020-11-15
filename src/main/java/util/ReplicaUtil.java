@@ -2,12 +2,13 @@ package util;
 
 import org.jgroups.Message;
 import replica.ReplicaOne;
+import replica.ReplicaThree;
 import replica.ReplicaTwo;
 import replica.common.Replica;
 import replica.data.ReplicaOneData;
+import replica.data.ReplicaThreeData;
 import replica.data.ReplicaTwoData;
 import replicaOne.model.ServerInventory;
-
 import javax.annotation.Nullable;
 
 import static common.ReplicaConstants.*;
@@ -32,6 +33,7 @@ public final class ReplicaUtil {
             case REPLICA_TWO:
                 return new ReplicaTwo(name, fetchReplicaTwoData(message)).start();
             case REPLICA_THREE:
+                return new ReplicaThree(name, fetchReplicaThreeData(message)).start();
             default:
                 return new ReplicaOne(name, fetchReplicaOneData(message)).start();
         }
@@ -51,6 +53,14 @@ public final class ReplicaUtil {
             return new ReplicaTwoData();
         }
         return new ReplicaTwoData(message.getObject());
+    }
+
+    private static ReplicaThreeData fetchReplicaThreeData(@Nullable Message message) {
+        if (message == null) {
+            return new ReplicaThreeData();
+        } else {
+            return message.getObject();
+        }
     }
 
 }
