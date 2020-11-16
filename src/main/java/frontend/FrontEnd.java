@@ -115,18 +115,7 @@ public class FrontEnd extends FrontEndPOA {
     }
 
     private void handleFailure(Response response) {
-        String replicaManager = "";
-        Map<String, String> receivedResponseMap = response.getResponseMap();
-        if (response.getResponses().size() != 3) {
-            for (String name : REPLICA_MANAGER_NAMES) {
-                if (!receivedResponseMap.containsKey(name)) {
-                    replicaManager = name;
-                    break;
-                }
-            }
-        } else {
-            replicaManager = response.getFailureReplicaManager();
-        }
+        String replicaManager = response.getFailureReplicaManager();
         this.sendFailureMessage(response.getSequenceNumber(), replicaManager);
     }
 

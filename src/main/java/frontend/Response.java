@@ -59,13 +59,22 @@ public class Response {
 
     public String getFailureReplicaManager() {
         String replicaManager = "";
-        String responseOne = this.responses.get(REPLICA_MANAGER_ONE);
-        if (responseOne.equals(this.responses.get(REPLICA_MANAGER_TWO))) {
-            replicaManager = REPLICA_MANAGER_THREE;
-        } else if (responseOne.equals(this.responses.get(REPLICA_MANAGER_THREE))) {
-            replicaManager = REPLICA_MANAGER_TWO;
+        if (responses.values().size() != 3) {
+            for (String name : REPLICA_MANAGER_NAMES) {
+                if (!responses.containsKey(name)) {
+                    return name;
+                }
+            }
         } else {
-            replicaManager = REPLICA_MANAGER_ONE;
+            String responseOne = this.responses.get(REPLICA_MANAGER_ONE);
+            if (responseOne.equals(this.responses.get(REPLICA_MANAGER_TWO))) {
+                replicaManager = REPLICA_MANAGER_THREE;
+            } else if (responseOne.equals(this.responses.get(REPLICA_MANAGER_THREE))) {
+                replicaManager = REPLICA_MANAGER_TWO;
+            } else {
+                replicaManager = REPLICA_MANAGER_ONE;
+            }
+            return replicaManager;
         }
         return replicaManager;
     }
