@@ -5,6 +5,7 @@ public final class ReplicaConstants {
     private ReplicaConstants() {
     }
 
+    public static final String FRONT_END_SERVER_NAME = "FrontEndServer";
     public static final String SEQUENCER_REPLICA_CLUSTER = "SequencerReplicaCluster";
     public static final String CLIENT_RM_CLUSTER = "ClientReplicaManagerCluster";
     public static final String REPLICA_RM_CLUSTER = "ReplicaRMCluster";
@@ -28,9 +29,13 @@ public final class ReplicaConstants {
 
     public static final String SEQUENCER_NAME = "Sequencer";
 
+
     public static final String LOG_REPLICA_START = "Replica %s is online";
     public static final String LOG_REPLICA_KILL = "Replica %s was killed";
     public static final String LOG_REPLICA_REQUEST_RECEIVED = "Replica %s received request: {%s}";
     public static final String LOG_REPLICA_REQUEST_RESULT = "Replica %s result for sequence number %d: {%s}";
     public static final String LOG_REPLICA_DATA_TRANSFER_REQUEST = "Replica %s received data transfer request";
+
+    public static final String REPLICA_NAME_DELIMETER = ":";
+
 }

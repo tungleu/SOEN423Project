@@ -1,5 +1,6 @@
 package util;
 
+import common.ReplicaConstants;
 import org.jgroups.Message;
 import replica.ReplicaOne;
 import replica.ReplicaThree;
@@ -9,6 +10,8 @@ import replica.data.ReplicaOneData;
 import replica.data.ReplicaThreeData;
 import replica.data.ReplicaTwoData;
 import replicaOne.model.ServerInventory;
+import replicamanager.ReplicaManager;
+
 import javax.annotation.Nullable;
 
 import static common.ReplicaConstants.*;
@@ -28,7 +31,7 @@ public final class ReplicaUtil {
 
     public static Replica startReplica(String replicaManager, String replica, @Nullable Message message) throws Exception {
         // TODO(#14): Add other code bases for replica and their corresponding data fetch
-        String name = replicaManager + replica;
+        String name = replicaManager + REPLICA_NAME_DELIMETER + replica;
         switch (replica) {
             case REPLICA_TWO:
                 return new ReplicaTwo(name, fetchReplicaTwoData(message)).start();
@@ -61,6 +64,10 @@ public final class ReplicaUtil {
         } else {
             return message.getObject();
         }
+    }
+
+    public static String fetchRMNamefromReplica(String replicaName){
+        return replicaName.split(REPLICA_NAME_DELIMETER)[0];
     }
 
 }
