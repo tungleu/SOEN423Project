@@ -38,7 +38,7 @@ public class ReplicaManager {
      */
     public void coldStart(String replicaOption) throws Exception {
         replicaName = replicaOption;
-        clientRMChannel.connect(REPLICA_RM_CLUSTER);
+        rmReplicaChannel.connect(REPLICA_RM_CLUSTER);
         replicaServer = ReplicaUtil.startReplica(name, replicaName, null);
         clientRMChannel.connect(CLIENT_RM_CLUSTER);
     }
