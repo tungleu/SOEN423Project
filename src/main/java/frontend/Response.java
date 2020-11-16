@@ -1,45 +1,50 @@
 package frontend;
 
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static common.ReplicaConstants.*;
+import static common.ReplicaConstants.REPLICA_MANAGER_ONE;
+
 
 public class Response {
-    private final Date timeCreated;
+    private final long timeCreated;
     private final Map<String, String> responses;
     private long sequenceNumber;
 
     public Response() {
-        this.timeCreated = new Date();
+        this.timeCreated = new Date().getTime();
         this.responses = new ConcurrentHashMap<>();
 
     }
+
     public Collection<String> getResponses() {
         return responses.values();
     }
 
-    public Map<String, String> getResponseMap(){
+    public Map<String, String> getResponseMap() {
         return responses;
     }
 
-    public Date getInitialTime(){
+    public long getInitialTime() {
         return timeCreated;
     }
 
-    public String getFinalResponse(){
+    public String getFinalResponse() {
         Set<String> values = new HashSet<>();
-        for(String value : this.getResponses()){
-            if(!values.add(value))
+        for (String value : this.getResponses()) {
+            if (!values.add(value))
                 return value;
         }
         return "";
     }
 
-    public void addResponse(String replicaManager, String response){
+    public void addResponse(String replicaManager, String response) {
         this.responses.put(replicaManager, response);
     }
 
-    public boolean isEqual(){
+    public boolean isEqual() {
         return this.getResponses().stream().distinct().count() <= 1;
 
     }
@@ -50,5 +55,18 @@ public class Response {
 
     public synchronized void setSequenceNumber(long sequenceNumber) {
         this.sequenceNumber = sequenceNumber;
+    }
+
+    public String getFailureReplicaManager() {
+        String replicaManager = "";
+        String responseOne = this.responses.get(REPLICA_MANAGER_ONE);
+        if (responseOne.equals(this.responses.get(REPLICA_MANAGER_TWO))) {
+            replicaManager = REPLICA_MANAGER_THREE;
+        } else if (responseOne.equals(this.responses.get(REPLICA_MANAGER_THREE))) {
+            replicaManager = REPLICA_MANAGER_TWO;
+        } else {
+            replicaManager = REPLICA_MANAGER_ONE;
+        }
+        return replicaManager;
     }
 }

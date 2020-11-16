@@ -1,7 +1,6 @@
 package replica;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import model.UDPRequestMessage;
 import org.jgroups.Address;
 import org.jgroups.Message;
@@ -31,7 +30,7 @@ public class ReplicaTwo extends Replica  {
                 .put(QC_SERVER_NAME, 8887)
                 .put(BC_SERVER_NAME, 8888)
                 .put(ON_SERVER_NAME, 8889)
-                .build();;
+                .build();
         for(String serverName : SERVER_NAMES) {
             StoreProxy storeProxy = new StoreProxy(serverName, this.replicaTwoData, portsConfig);
             this.storeMap.put(serverName, storeProxy);

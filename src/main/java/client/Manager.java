@@ -1,7 +1,9 @@
 package client;
 
 import CORBA_FE.*;
-import common.ReplicaConstants;
+
+import static common.ReplicaConstants.*;
+
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
@@ -9,28 +11,31 @@ import org.omg.CosNaming.NamingContextExtHelper;
 import java.util.Scanner;
 
 public class Manager {
-    private String province;
+    private final String province;
     private final FrontEnd CORBAFrontEnd;
     private final String managerID;
+
     public Manager(String managerID, String province) throws Exception {
         this.managerID = managerID;
         this.province = province;
-        String[] arguments = new String[] {"-ORBInitialPort","1234","-ORBInitialHost","localhost"};
+        String[] arguments = new String[]{"-ORBInitialPort", "1234", "-ORBInitialHost", "localhost"};
         ORB orb = ORB.init(arguments, null);
         org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
         NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
-        this.CORBAFrontEnd = (FrontEnd) FrontEndHelper.narrow(ncRef.resolve_str(ReplicaConstants.FRONT_END_SERVER_NAME));
+        this.CORBAFrontEnd = (FrontEnd) FrontEndHelper.narrow(ncRef.resolve_str(FRONT_END_SERVER_NAME));
 
 
     }
 
-    public void addItem(String itemID, String itemName,int quantity, int price){
+    public void addItem(String itemID, String itemName, int quantity, int price) {
         System.out.println(CORBAFrontEnd.addItem(this.managerID, itemID, itemName, quantity, price));
     }
-    public void removeItem(String itemID, int quantity){
+
+    public void removeItem(String itemID, int quantity) {
         System.out.println(CORBAFrontEnd.removeItem(this.managerID, itemID, quantity));
     }
-    public void listItemAvailablity(){
+
+    public void listItemAvailablity() {
         System.out.println(CORBAFrontEnd.listItemAvailability(this.managerID));
     }
 
@@ -42,8 +47,8 @@ public class Manager {
         String IDNumber = scanner.next();
         String clientID = province + "M" + IDNumber;
         System.out.println("Your ID is :" + clientID);
-        Manager manager = new Manager(clientID,province);
-        try{
+        Manager manager = new Manager(clientID, province);
+        try {
             int customerOption;
             String itemID;
             String itemName;
@@ -55,7 +60,7 @@ public class Manager {
                 System.out.println("2. Remove Item ");
                 System.out.println("3. List Item ");
                 customerOption = scanner.nextInt();
-                switch(customerOption){
+                switch (customerOption) {
                     case 1:
                         System.out.println("ADD ITEM SELECTED");
                         System.out.println("Enter item ID");
@@ -83,7 +88,7 @@ public class Manager {
                 }
             }
         } catch (Exception e) {
-            System.out.println("ERROR : " + e) ;
+            System.out.println("ERROR : " + e);
             e.printStackTrace(System.out);
         }
     }
