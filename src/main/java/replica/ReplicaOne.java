@@ -8,15 +8,10 @@ import replica.data.ReplicaOneData;
 import replicaOne.model.Pair;
 import replicaOne.model.ServerInventory;
 import replicaOne.server.impl.Store;
-import replicaOne.server.logger.ServerLogger;
 import util.MessageUtil;
 
-import static common.ReplicaConstants.BC_SERVER_NAME;
-import static common.ReplicaConstants.ON_SERVER_NAME;
-import static common.ReplicaConstants.QC_SERVER_NAME;
-import static replicaOne.server.util.udp.UDPClientRequestUtil.BC_PORT;
-import static replicaOne.server.util.udp.UDPClientRequestUtil.ON_PORT;
-import static replicaOne.server.util.udp.UDPClientRequestUtil.QC_PORT;
+import static common.ReplicaConstants.*;
+import static replicaOne.server.util.udp.UDPClientRequestUtil.*;
 import static replicaOne.server.util.udp.UDPServerStarterUtil.startUDPServer;
 
 public class ReplicaOne extends Replica {
@@ -40,12 +35,11 @@ public class ReplicaOne extends Replica {
             String serverName = serverPair.getKey();
             int port = serverPair.getValue();
 
-            ServerLogger serverLogger = new ServerLogger(serverName);
             ServerInventory serverInventory = fetchServerInventory(serverName);
-            Store store = new Store(serverName, port, serverInventory, serverLogger);
+            Store store = new Store(serverName, port, serverInventory);
             storeMap.put(serverName, store);
 
-            startUDPServer(port, serverInventory, serverLogger);
+            startUDPServer(port, serverInventory);
         }
     }
 

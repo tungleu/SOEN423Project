@@ -1,7 +1,6 @@
 package replicaOne.server.util.udp;
 
 import replicaOne.model.ServerInventory;
-import replicaOne.server.logger.ServerLogger;
 import replicaOne.server.requests.UDPServerRequestHandler;
 
 import java.net.DatagramPacket;
@@ -17,10 +16,10 @@ public final class UDPServerStarterUtil {
     private UDPServerStarterUtil() {
     }
 
-    public static void startUDPServer(int port, ServerInventory serverInventory, ServerLogger serverLogger) {
+    public static void startUDPServer(int port, ServerInventory serverInventory) {
         new Thread(() -> {
             try (DatagramSocket aSocket = new DatagramSocket(port)) {
-                UDPServerRequestHandler udpServerRequestHandler = new UDPServerRequestHandler(serverInventory, serverLogger);
+                UDPServerRequestHandler udpServerRequestHandler = new UDPServerRequestHandler(serverInventory);
                 while (true) {
                     byte[] buffer = new byte[UDPClientRequestUtil.MAX_BYTE_BUFFER];
                     DatagramPacket request = new DatagramPacket(buffer, buffer.length);

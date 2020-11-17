@@ -4,7 +4,6 @@ import replicaOne.model.Item;
 import replicaOne.model.Pair;
 import replicaOne.model.Request;
 import replicaOne.model.ServerInventory;
-import replicaOne.server.logger.ServerLogger;
 import replicaOne.server.util.TimeUtil;
 import replicaOne.server.util.user.UserItemTransactionUtil;
 
@@ -31,12 +30,10 @@ public class UDPServerRequestHandler {
     private static final String ERROR_MESSAGE = "Error could not complete request, please try again.";
 
     private final ServerInventory serverInventory;
-    private final ServerLogger serverLogger;
     private final String serverName;
 
-    public UDPServerRequestHandler(ServerInventory serverInventory, ServerLogger serverLogger) {
+    public UDPServerRequestHandler(ServerInventory serverInventory) {
         this.serverInventory = serverInventory;
-        this.serverLogger = serverLogger;
         this.serverName = serverInventory.getServerName();
     }
 
@@ -123,44 +120,39 @@ public class UDPServerRequestHandler {
                     String.format("%s Item %s does not exist in this store. Please try a different item id.",
                             TimeUtil.generateTimestamp(),
                             itemID);
-            serverLogger.logAction(userID, message);
             return message;
         }
         return UserItemTransactionUtil
-                .maybePurchaseItem(userID, item, parseStringToDate(date), serverLogger, serverInventory,
+                .maybePurchaseItem(userID, item, parseStringToDate(date), serverInventory,
                         true /* = isForeignCustomer */);
     }
 
     private String maybeReturnItem(String userID, String itemID, String date) {
         return UserItemTransactionUtil
                 .maybeReturnItem(userID, serverInventory, true /* = isForeignCustomer */, itemID,
-                        parseStringToDate(date),
-                        serverLogger);
+                        parseStringToDate(date));
     }
 
     private String getBudget(String userId) {
         int budget = serverInventory.getUserBudgets().get(userId);
         String message = String.format("%s Retrieved user %s budget %d", generateTimestamp(), userId, budget);
-        serverLogger.logAction(userId, message);
         return Integer.toString(budget);
     }
 
     private String updateBudget(String userId, String newBudget) {
         serverInventory.getUserBudgets().put(userId, Integer.parseInt(newBudget));
-        serverLogger.logAction(userId,
-                String.format("%s Updated user %s budget to %s", generateTimestamp(), userId, newBudget));
         return newBudget;
     }
 
     private String waitListUserForItem(String userID, String itemID) {
-        return waitListUser(userID, itemID, serverInventory, serverLogger, true /* = isForeignCustomer*/);
+        return waitListUser(userID, itemID, serverInventory, true /* = isForeignCustomer*/);
     }
 
     private String checkReturnEligibility(String userId, String itemId, String date) {
         Date dateOfReturn = parseStringToDate(date);
         Pair<Integer, String> result =
                 isEligibleForExchange(userId, serverName.equals(getServerFromId(itemId)), serverInventory, itemId,
-                        dateOfReturn, serverLogger);
+                        dateOfReturn);
         return result.getKey() + "," + result.getValue();
     }
 
@@ -174,6 +166,6 @@ public class UDPServerRequestHandler {
 
         Item itemToPurchase = serverInventory.getInventoryCatalog().get(itemIdToBuy);
         return UserItemTransactionUtil
-                .exchangeItem(userId, budget, itemIdToReturn, itemToPurchase, dateNow, serverInventory, serverLogger);
+                .exchangeItem(userId, budget, itemIdToReturn, itemToPurchase, dateNow, serverInventory);
     }
 }
