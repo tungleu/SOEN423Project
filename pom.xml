@@ -22,11 +22,17 @@
             <artifactId>guava</artifactId>
             <version>30.0-jre</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.glassfish.corba/glassfish-corba-omgapi -->
+        <!-- https://mvnrepository.com/artifact/javax.transaction/jta -->
+        <dependency>
+            <groupId>javax.transaction</groupId>
+            <artifactId>jta</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.glassfish.corba/glassfish-corba-orb -->
         <dependency>
             <groupId>org.glassfish.corba</groupId>
-            <artifactId>glassfish-corba-omgapi</artifactId>
-            <version>4.2.2</version>
+            <artifactId>glassfish-corba-orb</artifactId>
+            <version>4.2.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.github.kostaskougios/cloning -->
         <dependency>
@@ -44,8 +50,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>9</source>
-                    <target>9</target>
+                    <source>8</source>
+                    <target>8</target>
                 </configuration>
             </plugin>
         </plugins>

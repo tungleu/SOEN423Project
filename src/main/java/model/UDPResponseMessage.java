@@ -9,6 +9,7 @@ public class UDPResponseMessage implements Serializable {
     private final String sender;
     private final String responseType;
     private Serializable response;
+    private long sequenceNumber;
     private final String checksum;
 
     public UDPResponseMessage(String sender, String responseType, Serializable response, String checksum) {
@@ -22,6 +23,15 @@ public class UDPResponseMessage implements Serializable {
         this.sender = sender;
         this.responseType = responseType;
         this.checksum = ChecksumUtil.generateChecksumSHA256(responseType);
+    }
+
+    public UDPResponseMessage(String sender, String responseType, Serializable response, String checksum, long sequenceNumber){
+        this(sender, responseType, response, checksum);
+        this.sequenceNumber = sequenceNumber;
+    }
+
+    public long getSequenceNumber() {
+        return sequenceNumber;
     }
 
     public String getSender() {
