@@ -14,7 +14,7 @@ public class Response {
     private long sequenceNumber;
 
     public Response() {
-        this.timeCreated = new Date().getTime();
+        this.timeCreated = System.currentTimeMillis();
         this.responses = new ConcurrentHashMap<>();
 
     }

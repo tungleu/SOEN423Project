@@ -16,11 +16,7 @@ public final class ChecksumUtil {
     }
 
     public static String generateChecksumSHA256(List<String> strings){
-        StringBuilder sb = new StringBuilder();
-        for(String string : strings){
-            sb.append(string);
-        }
-        return Hashing.sha256().hashString(sb.toString(), Charset.defaultCharset()).toString();
+        return generateChecksumSHA256(String.join("",strings));
     }
 
 }

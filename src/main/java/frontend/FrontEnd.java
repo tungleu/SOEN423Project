@@ -42,49 +42,49 @@ public class FrontEnd extends FrontEndPOA {
     @Override
     public String addItem(String managerID, String itemID, String itemName, int quantity, int price) {
         List<String> params = Arrays.asList(managerID, itemID, itemName, Integer.toString(quantity), Integer.toString(price));
-        return marshallRequest(ChecksumUtil.generateChecksumSHA256(params), RequestType.ADD_ITEM, params);
+        return marshallRequest(RequestType.ADD_ITEM, params);
     }
 
     @Override
     public String removeItem(String managerID, String itemID, int quantity) {
         List<String> params = Arrays.asList(managerID, itemID, Integer.toString(quantity));
-        return marshallRequest(ChecksumUtil.generateChecksumSHA256(params), RequestType.REMOVE_ITEM, params);
+        return marshallRequest(RequestType.REMOVE_ITEM, params);
     }
 
     @Override
     public String listItemAvailability(String managerID) {
         List<String> params = Arrays.asList(managerID);
-        return marshallRequest(ChecksumUtil.generateChecksumSHA256(params), RequestType.LIST_ITEM_AVAILABILITY, params);
+        return marshallRequest(RequestType.LIST_ITEM_AVAILABILITY, params);
     }
 
     @Override
     public String purchaseItem(String customerID, String itemID, String dateOfPurchase) {
         List<String> params = Arrays.asList(customerID, itemID, dateOfPurchase);
-        return marshallRequest(ChecksumUtil.generateChecksumSHA256(params), RequestType.PURCHASE_ITEM, params);
+        return marshallRequest(RequestType.PURCHASE_ITEM, params);
     }
 
     @Override
     public String findItem(String customerID, String itemName) {
         List<String> params = Arrays.asList(customerID, itemName);
-        return marshallRequest(ChecksumUtil.generateChecksumSHA256(params), RequestType.FIND_ITEM, params);
+        return marshallRequest(RequestType.FIND_ITEM, params);
     }
 
     @Override
     public String returnItem(String customerID, String itemID, String dateOfReturn) {
         List<String> params = Arrays.asList(customerID, itemID, dateOfReturn);
-        return marshallRequest(ChecksumUtil.generateChecksumSHA256(params), RequestType.RETURN_ITEM, params);
+        return marshallRequest(RequestType.RETURN_ITEM, params);
     }
 
     @Override
     public String exchangeItem(String customerID, String newitemID, String oldItemID, String dateOfExchange) {
         List<String> params = Arrays.asList(customerID, newitemID, oldItemID, dateOfExchange);
-        return marshallRequest(ChecksumUtil.generateChecksumSHA256(params), RequestType.EXCHANGE_ITEM, params);
+        return marshallRequest(RequestType.EXCHANGE_ITEM, params);
     }
 
     @Override
     public String addWaitList(String customerID, String itemID) {
         List<String> params = Arrays.asList(customerID, itemID);
-        return marshallRequest(ChecksumUtil.generateChecksumSHA256(params), RequestType.ADD_WAIT_LIST, params);
+        return marshallRequest(RequestType.ADD_WAIT_LIST, params);
     }
 
     @Override
@@ -93,13 +93,14 @@ public class FrontEnd extends FrontEndPOA {
     }
 
 
-    private String marshallRequest(String checksum, RequestType requestType, List<String> params) {
+    private String marshallRequest(RequestType requestType, List<String> params) {
+        String checksum = ChecksumUtil.generateChecksumSHA256(params);
         OperationRequest operationRequest = new OperationRequest(requestType, params, checksum, CORBA_CLIENT_NAME);
         Response response = new Response();
         responseMap.put(checksum, response);
         try {
             clientSequencerChannel.send(MessageUtil.createMessageFor(null, operationRequest));
-            while (new Date().getTime() - response.getInitialTime() < 5000 && response.getResponses().size() != 3) {
+            while (System.currentTimeMillis() - response.getInitialTime() < 5000 && response.getResponses().size() != 3) {
             }
             if (!response.isEqual() || response.getResponses().size() != 3) {
                 this.handleFailure(response);

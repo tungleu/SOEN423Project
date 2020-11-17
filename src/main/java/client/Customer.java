@@ -3,6 +3,7 @@ package client;
 import CORBA_FE.*;
 
 import static common.ReplicaConstants.*;
+import static common.OperationResponse.*;
 
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NamingContextExt;
@@ -28,7 +29,7 @@ public class Customer {
     public void purchaseItem(String itemID, String inputDate) {
         String result = this.CORBAFrontEnd.purchaseItem(this.customerID, itemID, inputDate);
         System.out.println(result);
-        if (result.indexOf("waitlist") > 0) {
+        if (result.equals(String.format(PURCHASE_ITEM_OUT_OF_STOCK, itemID))) {
             Scanner scanner = new Scanner(System.in);
             String option = scanner.next();
             if (option.equals("yes")) {
