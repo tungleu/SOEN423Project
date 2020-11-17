@@ -61,7 +61,7 @@ public class Store implements StoreStrategy {
         if(this.inventory.containsKey(itemID)) {
             String[] info = this.inventory.get(itemID).split(",");
             if(price != Integer.parseInt(info[2])){
-                return String.format(ADD_ITEM_INVALID_PRICE, (float)price);
+                return String.format(ADD_ITEM_INVALID_PRICE, price);
             }
             info[1] = Integer.toString(Integer.parseInt(info[1]) + quantity);
             inventory.replace(itemID, String.join(",", info));
@@ -85,7 +85,7 @@ public class Store implements StoreStrategy {
                 }
             }
         }
-        return String.format(ADD_ITEM_SUCCESS, itemName, itemID, quantity, (float)price);
+        return String.format(ADD_ITEM_SUCCESS, itemName, itemID, quantity, price);
 
     }
 
@@ -104,7 +104,7 @@ public class Store implements StoreStrategy {
             if (current_quantity < quantity) {
                 this.inventory.remove(itemID);
                 logger.info("Manager with id: " + managerID + " removed this item out of the store:" + itemID);
-                return String.format(REMOVE_ITEM_BEYOND_QUANTITY, quantity, itemID, current_quantity);
+                return String.format(REMOVE_ITEM_BEYOND_QUANTITY, quantity, itemID);
             } else {
                 info[1] = Integer.toString(Integer.parseInt(info[1]) - quantity);
                 inventory.replace(itemID, String.join(",", info));
@@ -126,7 +126,7 @@ public class Store implements StoreStrategy {
             String[] itemInfo = entry.getValue().split(",");
             String name = itemInfo[0];
             int quantity = Integer.parseInt(itemInfo[1]);
-            float price = (float)Float.parseFloat(itemInfo[2]);
+            int price = Integer.parseInt(itemInfo[2]);
             sb.append(String.format(LIST_ITEM_AVAILABILITY_SINGLE_SUCCESS, entry.getKey(),name, quantity,price));
             sb.append(",");
         }
@@ -236,7 +236,7 @@ public class Store implements StoreStrategy {
             String[] itemInfo = entry.getValue().split(",");
             String name = itemInfo[0];
             int quantity = Integer.parseInt(itemInfo[1]);
-            float price = (float)Float.parseFloat(itemInfo[2]);
+            int price = Integer.parseInt(itemInfo[2]);
             if (itemName.trim().equals(name)) {
                 sb.append(String.format(FIND_ITEM_SINGLE_SUCCESS, name, quantity, price));
                 sb.append(",");

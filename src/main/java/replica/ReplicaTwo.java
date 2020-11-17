@@ -1,5 +1,6 @@
 package replica;
 
+import com.google.common.collect.ImmutableMap;
 import model.UDPRequestMessage;
 import org.jgroups.Address;
 import org.jgroups.Message;
@@ -12,7 +13,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static common.ReplicaConstants.*;
-import static java.util.Map.entry;
+
 
 public class ReplicaTwo extends Replica  {
 
@@ -25,11 +26,11 @@ public class ReplicaTwo extends Replica  {
 
     @Override
     protected void initReplicaStores() throws IOException {
-        Map<String, Integer> portsConfig = Map.ofEntries(
-                entry(QC_SERVER_NAME, 8887),
-                entry(BC_SERVER_NAME, 8888),
-                entry(ON_SERVER_NAME, 8889)
-        );
+        Map<String, Integer> portsConfig = ImmutableMap.<String, Integer> builder()
+                .put(QC_SERVER_NAME, 8887)
+                .put(BC_SERVER_NAME, 8888)
+                .put(ON_SERVER_NAME, 8889)
+                .build();
         for(String serverName : SERVER_NAMES) {
             StoreProxy storeProxy = new StoreProxy(serverName, this.replicaTwoData, portsConfig);
             this.storeMap.put(serverName, storeProxy);
