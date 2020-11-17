@@ -3,8 +3,6 @@ package replicaOne.server.util.user;
 import replicaOne.model.Item;
 import replicaOne.model.PurchaseLog;
 import replicaOne.model.ServerInventory;
-import replicaOne.server.logger.ServerLogger;
-import replicaOne.server.logger.UserLogger;
 
 import java.util.Date;
 import java.util.List;
@@ -30,20 +28,16 @@ public final class UserItemTransactionUtil {
     private UserItemTransactionUtil() {
     }
 
-    public static String maybePurchaseItem(String userID, Item item, Date dateOfPurchase, ServerLogger serverLogger,
-                                           ServerInventory serverInventory, boolean isForeignCustomer) {
+    public static String maybePurchaseItem(String userID, Item item, Date dateOfPurchase, ServerInventory serverInventory,
+                                           boolean isForeignCustomer) {
         Set<String> foreignCustomers = serverInventory.getForeignCustomers();
         int budget = UserBudgetUtil.retrieveUserBudget(userID, serverInventory, isForeignCustomer);
         if (budget < 0) {
             return String.format("%s Error: Failed to retrieve user %s budget.", generateTimestamp(), userID);
         } else if (budget < item.getPrice()) {
-            String message = String.format(PURCHASE_ITEM_NOT_ENOUGH_FUNDS, item.getItemId());
-            UserLogger.logActionForUser(userID, message);
-            return message;
+            return String.format(PURCHASE_ITEM_NOT_ENOUGH_FUNDS, item.getItemId());
         } else if (isForeignCustomer && foreignCustomers.contains(userID)) {
-            String message = String.format(PURCHASE_ITEM_ANOTHER_STORE_LIMIT, item.getItemId());
-            serverLogger.logAction(userID, message);
-            return message;
+            return String.format(PURCHASE_ITEM_ANOTHER_STORE_LIMIT, item.getItemId());
         }
 
         Map<String, List<PurchaseLog>> userPurchaseLog =
@@ -51,14 +45,8 @@ public final class UserItemTransactionUtil {
         // Successfully passed checks
         boolean isPurchaseSuccessful = item.addUserToLog(userPurchaseLog, dateOfPurchase, 1);
         if (isPurchaseSuccessful) {
-            UserBudgetUtil.updateUserBudget(userID, serverInventory, isForeignCustomer, item.getPrice(),
-                    (newBudget) -> UserLogger
-                            .logActionForUser(userID,
-                                    String.format("%s Item " + "%s successfully purchased for %d. New balance is: %d",
-                                            generateTimestamp(), item.getItemName(), item.getPrice(), newBudget)));
+            UserBudgetUtil.updateUserBudget(userID, serverInventory, isForeignCustomer, item.getPrice());
             String message = String.format(PURCHASE_ITEM_SUCCESS, item.getItemId());
-            serverLogger.logAction(userID, message);
-            UserLogger.logActionForUser(userID, message);
             foreignCustomers.add(userID);
             return message;
         } else {
@@ -66,9 +54,8 @@ public final class UserItemTransactionUtil {
         }
     }
 
-    public static String maybeReturnItem(String userID, ServerInventory serverInventory, boolean isForeignCustomer,
-                                         String itemId,
-                                         Date dateOfReturn, ServerLogger serverLogger) {
+    public static String maybeReturnItem(String userID, ServerInventory serverInventory, boolean isForeignCustomer, String itemId,
+                                         Date dateOfReturn) {
         Map<String, Map<String, List<PurchaseLog>>> userPurchaseLogs = serverInventory.getUserPurchaseLogs();
         Map<String, List<PurchaseLog>> userPurchaseLog = userPurchaseLogs.get(userID);
         List<PurchaseLog> purchaseLog = userPurchaseLog.get(itemId);
@@ -83,18 +70,10 @@ public final class UserItemTransactionUtil {
             } else {
                 PurchaseLog mostRecentBoughtDate = purchaseLog.remove(index);
                 UserBudgetUtil
-                        .updateUserBudget(userID, serverInventory, isForeignCustomer, -mostRecentBoughtDate.getPrice(),
-                                (newBudget) -> {
-                                    String refundMessage =
-                                            String.format("%s Received refund of %d for item %s. New budget it %d.",
-                                                    generateTimestamp(), mostRecentBoughtDate.getPrice(), itemId,
-                                                    newBudget);
-                                    serverLogger.logAction(userID, refundMessage);
-                                    UserLogger.logActionForUser(userID, refundMessage);
-                                });
+                        .updateUserBudget(userID, serverInventory, isForeignCustomer, -mostRecentBoughtDate.getPrice());
 
                 // Update catalog with refunded item
-                updateInventoryForRefundedItem(serverInventory, userID, itemId, mostRecentBoughtDate, serverLogger);
+                updateInventoryForRefundedItem(serverInventory, itemId, mostRecentBoughtDate);
 
                 // Remove purchase log if no more items to refund possible
                 if (purchaseLog.isEmpty()) {
@@ -111,19 +90,14 @@ public final class UserItemTransactionUtil {
         return message;
     }
 
-    public static String exchangeItem(String userId, int budget, String itemIdToReturn, Item itemToPurchase,
-                                      Date dateNow,
-                                      ServerInventory serverInventory, ServerLogger serverLogger) {
+    public static String exchangeItem(String userId, int budget, String itemIdToReturn, Item itemToPurchase, Date dateNow,
+                                      ServerInventory serverInventory) {
         boolean isForeignCustomer = !getServerFromId(userId).equals(serverInventory.getServerName());
         boolean isItemToReturnLocal = getServerFromId(itemIdToReturn).equals(serverInventory.getServerName());
 
         // Completed ignore steps if they already purchased from store as foreign customer
         if (isForeignCustomer && serverInventory.getForeignCustomers().contains(userId) && !isItemToReturnLocal) {
-            String message =
-                    String.format(EXCHANGE_ITEM_ANOTHER_STORE_LIMIT, itemToPurchase.getItemId(), itemIdToReturn);
-            UserLogger.logActionForUser(userId, message);
-            serverLogger.logAction(userId, message);
-            return message;
+            return String.format(EXCHANGE_ITEM_ANOTHER_STORE_LIMIT, itemToPurchase.getItemId(), itemIdToReturn);
         }
 
         String message;
@@ -134,24 +108,19 @@ public final class UserItemTransactionUtil {
             // successfully, we can
             // purchase the item
             if (budget < itemToPurchase.getPrice()) {
-                message = String.format(EXCHANGE_ITEM_NOT_ENOUGH_FUNDS, itemToPurchase.getItemId(), itemIdToReturn,
-                        userId);
+                message = String.format(EXCHANGE_ITEM_NOT_ENOUGH_FUNDS, itemToPurchase.getItemId(), itemIdToReturn, userId);
             } else if (itemToPurchase.getItemQuantity() < 1) {
-                message = String.format(EXCHANGE_ITEM_OUT_OF_STOCK, itemToPurchase.getItemId(), itemIdToReturn,
-                        itemToPurchase.getItemId());
+                message = String.format(EXCHANGE_ITEM_OUT_OF_STOCK, itemToPurchase.getItemId(), itemIdToReturn, itemToPurchase.getItemId());
             } else {
                 // 2. Perform return item, if at this point the return item fails due to manager removed item we stop
                 // and don't do anything
                 String returnItemResponse;
                 if (isItemToReturnLocal) {
-                    returnItemResponse =
-                            maybeReturnItem(userId, serverInventory, isForeignCustomer, itemIdToReturn, dateNow,
-                                    serverLogger);
+                    returnItemResponse = maybeReturnItem(userId, serverInventory, isForeignCustomer, itemIdToReturn, dateNow);
                 } else {
                     String server = getServerFromId(itemIdToReturn);
                     returnItemResponse =
-                            requestFromStore(RETURN_ITEM_REQ, getPortForServer(server), userId, itemIdToReturn,
-                                    parseDateToString(dateNow))
+                            requestFromStore(RETURN_ITEM_REQ, getPortForServer(server), userId, itemIdToReturn, parseDateToString(dateNow))
                                     .trim();
                 }
 
@@ -162,54 +131,36 @@ public final class UserItemTransactionUtil {
                 // that we are able to purchase it as we first locked the item being purchased to prevent others from
                 // doing so concurrently
                 if (returnItemResponse.contains("successful")) {
-                    maybePurchaseItem(userId, itemToPurchase, dateNow, serverLogger, serverInventory,
-                            isForeignCustomer);
+                    maybePurchaseItem(userId, itemToPurchase, dateNow, serverInventory, isForeignCustomer);
                     message = String.format(EXCHANGE_ITEM_SUCCESS, itemToPurchase.getItemId(), itemIdToReturn);
                 }
             }
         }
-
-        UserLogger.logActionForUser(userId, message);
-        serverLogger.logAction(userId, message);
-
         return message;
     }
 
-    private static void updateInventoryForRefundedItem(ServerInventory serverInventory, String userId, String itemId,
-                                                       PurchaseLog purchase,
-                                                       ServerLogger serverLogger) {
+    private static void updateInventoryForRefundedItem(ServerInventory serverInventory, String itemId, PurchaseLog purchase) {
         Map<String, Item> itemCatalog = serverInventory.getInventoryCatalog();
         Item item = itemCatalog.get(itemId);
         if (item == null) {
             // Block other possible concurrent requests for adding or refunding the same item that doesn't exists
             synchronized (itemCatalog) {
                 Item oldItem =
-                        itemCatalog.putIfAbsent(purchase.getItemId(),
-                                new Item(itemId, purchase.getItemName(), purchase.getPrice(), 1));
+                        itemCatalog.putIfAbsent(purchase.getItemId(), new Item(itemId, purchase.getItemName(), purchase.getPrice(), 1));
                 // Possibility of item being already inserted because of the cached item in the first get() call
                 if (oldItem != null) {
-                    updateExistingItemQuantity(userId, oldItem, serverInventory, serverLogger);
-                } else {
-                    serverLogger.logAction(userId,
-                            String.format("%s Adding new item %s for recent refund by user %s.", generateTimestamp(),
-                                    itemId,
-                                    userId));
+                    updateExistingItemQuantity(oldItem, serverInventory);
                 }
             }
         } else {
-            updateExistingItemQuantity(userId, item, serverInventory, serverLogger);
+            updateExistingItemQuantity(item, serverInventory);
         }
     }
 
-    private static void updateExistingItemQuantity(String userId, Item item, ServerInventory serverInventory,
-                                                   ServerLogger serverLogger) {
+    private static void updateExistingItemQuantity(Item item, ServerInventory serverInventory) {
         synchronized (item) {
             item.updateQuantity(1);
-            serverLogger.logAction(userId,
-                    String.format("%s Updating item %s for recent refund by user %s.", generateTimestamp(),
-                            item.getItemId(),
-                            userId));
-            maybeLendItemsToWaitList(userId, serverInventory, item, serverInventory.getServerName(), serverLogger);
+            maybeLendItemsToWaitList(serverInventory, item, serverInventory.getServerName());
         }
     }
 

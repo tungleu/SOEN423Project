@@ -4,8 +4,6 @@ import replicaOne.model.ServerInventory;
 import replicaOne.server.requests.RequestType;
 import replicaOne.server.util.udp.UDPClientRequestUtil;
 
-import java.util.function.Consumer;
-
 import static replicaOne.server.util.IdUtil.getServerFromId;
 import static replicaOne.server.util.udp.UDPClientRequestUtil.getPortForServer;
 
@@ -18,15 +16,12 @@ public final class UserBudgetUtil {
     }
 
     public static void updateUserBudget(String customerID, ServerInventory serverInventory, boolean isForeignCustomer,
-                                        int price,
-                                        Consumer<Integer> userLogger) {
+                                        int price) {
         if (isForeignCustomer) {
             int budget = retrieveUserBudget(customerID, serverInventory, true) - price;
-            String responseBudget =
-                    UDPClientRequestUtil.requestFromStore(RequestType.UPDATE_BUDGET_REQ,
+            UDPClientRequestUtil.requestFromStore(RequestType.UPDATE_BUDGET_REQ,
                             getPortForServer(getServerFromId(customerID)), customerID,
                             Integer.toString(budget));
-            userLogger.accept(Integer.parseInt(responseBudget));
         } else {
             serverInventory.getUserBudgets().put(customerID, serverInventory.getUserBudgets().get(customerID) - price);
         }

@@ -4,8 +4,6 @@ import common.StoreStrategy;
 import replicaOne.model.Item;
 import replicaOne.model.Pair;
 import replicaOne.model.ServerInventory;
-import replicaOne.server.logger.ServerLogger;
-import replicaOne.server.logger.UserLogger;
 import replicaOne.server.util.IdUtil;
 import replicaOne.server.util.user.UserItemTransactionUtil;
 
@@ -25,18 +23,16 @@ public class Store implements StoreStrategy {
     // Server information & logger
     private final String serverName;
     private final int serverPort;
-    private final ServerLogger logger;
 
     // Server Data
     private final Map<String, Item> inventoryCatalog;
     private final Map<String, Queue<String>> itemWaitList;
     private final ServerInventory serverInventory;
 
-    public Store(String serverName, int port, ServerInventory serverInventory, ServerLogger logger) {
+    public Store(String serverName, int port, ServerInventory serverInventory) {
         this.inventoryCatalog = serverInventory.getInventoryCatalog();
         this.itemWaitList = serverInventory.getItemWaitList();
         this.serverInventory = serverInventory;
-        this.logger = logger;
         this.serverName = serverName;
         this.serverPort = port;
     }
@@ -45,9 +41,6 @@ public class Store implements StoreStrategy {
 
     @Override
     public String addItem(String userID, String itemID, String itemName, int itemQuantity, int itemPrice) {
-        logger.logAction(userID, String.format("%s Request: %s, Params: [User: %s, Item id: %s, Item name: %s, " +
-                        "Quantity: %d, Price: %d]",
-                generateTimestamp(), "addItem", userID, itemID, itemName, itemQuantity, itemPrice));
         try {
             IdUtil.checkHasAccess(serverInventory, userID, true /* = isManager */);
         } catch (Exception e) {
@@ -71,22 +64,16 @@ public class Store implements StoreStrategy {
                 // First we update the name & price before performing automatic purchases for clients
                 item.setPrice(itemPrice);
                 item.setItemName(itemName);
-                updateItemQuantity(userID, item, itemQuantity);
-                maybeLendItemsToWaitList(userID, serverInventory, item, serverName, logger);
+                updateItemQuantity(item, itemQuantity);
+                maybeLendItemsToWaitList(serverInventory, item, serverName);
                 message = String.format(ADD_ITEM_SUCCESS, itemName, itemID, itemQuantity, itemPrice);
             }
         }
-        UserLogger.logActionForUser(userID, message);
-        logger.logAction(userID, message);
         return message;
     }
 
     @Override
     public String removeItem(String userID, String itemID, int quantity) {
-        logger.logAction(userID,
-                String.format("%s Request: %s, Params: [User: %s, Item id: %s, Quantity: %d]", generateTimestamp(),
-                        "removeItem",
-                        userID, itemID, quantity));
         try {
             IdUtil.checkHasAccess(serverInventory, userID, true /* = isManager */);
         } catch (Exception e) {
@@ -103,25 +90,18 @@ public class Store implements StoreStrategy {
                 // Removing negative numbers automatically removes the item
                 synchronized (item) {
                     int itemsToRemove = (quantity <= 0) ? 0 : -quantity;
-                    updateItemQuantity(userID, item, itemsToRemove);
+                    updateItemQuantity(item, itemsToRemove);
                 }
                 message = String.format(REMOVE_ITEM_SUCCESS, item.getItemName(), itemID);
             }
         } else {
             message = String.format(REMOVE_ITEM_NOT_EXISTS, itemID);
         }
-
-        UserLogger.logActionForUser(userID, message);
-        logger.logAction(userID, message);
-
         return message;
     }
 
     @Override
     public String listItemAvailability(String userID) {
-        logger.logAction(userID,
-                String.format("%s Request: %s, Params: [User: %s]", generateTimestamp(), "listItemAvailability",
-                        userID));
         try {
             IdUtil.checkHasAccess(serverInventory, userID, true /* = isManager */);
         } catch (Exception e) {
@@ -143,9 +123,6 @@ public class Store implements StoreStrategy {
 
     @Override
     public String purchaseItem(String userID, String itemId, String dateOfPurchase) {
-        logger.logAction(userID,
-                String.format("%s Request: %s, Params: [User: %s, Item id: %s, PurchaseDate: %s]", generateTimestamp(),
-                        "purchaseItem", userID, itemId, dateOfPurchase));
         try {
             IdUtil.checkHasAccess(serverInventory, userID, false /* = isManager */);
         } catch (Exception e) {
@@ -158,33 +135,19 @@ public class Store implements StoreStrategy {
             // Perform local server check
             Item item = inventoryCatalog.get(itemId);
             if (item == null) {
-                String message =
-                        String.format("%s Purchase un-successfully, item with item id %s does not exists in the store.",
-                                generateTimestamp(), itemId);
-                logger.logAction(userID, message);
-                UserLogger.logActionForUser(userID, message);
-                return message;
+                return String.format("%s Purchase un-successfully, item with item id %s does not exists in the store.", generateTimestamp(),
+                                     itemId);
             }
-            response = maybePurchaseItem(userID, item, parsedDate, logger, serverInventory,
-                    false /* = isForeignCustomer */);
+            response = maybePurchaseItem(userID, item, parsedDate, serverInventory, false /* = isForeignCustomer */);
         } else {
             // UDP to other server
-            logger.logAction(userID,
-                    String.format("%s UDP Request to server %s with Params: [User: %s, Item id: %s, PurchaseDate: %s]",
-                            generateTimestamp(), server, userID, itemId, dateOfPurchase));
-            response =
-                    requestFromStore(PURCHASE_ITEM_REQ, getPortForServer(server), userID, itemId,
-                            dateOfPurchase).trim();
+            response = requestFromStore(PURCHASE_ITEM_REQ, getPortForServer(server), userID, itemId, dateOfPurchase).trim();
         }
         return response;
     }
 
     @Override
     public String findItem(String userID, String itemName) {
-        logger.logAction(userID,
-                String.format("%s Request: %s, Params: [User: %s, Item name: %s]", generateTimestamp(), "findItem",
-                        userID,
-                        itemName));
         try {
             IdUtil.checkHasAccess(serverInventory, userID, false /* = isManager */);
         } catch (Exception e) {
@@ -195,17 +158,12 @@ public class Store implements StoreStrategy {
 
         // Current store
         inventoryCatalog.values().forEach(
-                (item) -> results.add(String.format(FIND_ITEM_SINGLE_SUCCESS, item.getItemId(), item.getItemQuantity(),
-                        item.getPrice())));
+                (item) -> results.add(String.format(FIND_ITEM_SINGLE_SUCCESS, item.getItemId(), item.getItemQuantity(), item.getPrice())));
         // UDP req to other stores for items
         for (int port : PORTS) {
             if (serverPort != port) {
                 String responseString = requestFromStore(FIND_ITEM_REQ, port, itemName);
-                logger.logAction(userID,
-                        String.format("%s Result from UDP to server port %d findItem: %s", generateTimestamp(), port,
-                                responseString));
                 String response = responseString.trim();
-
                 // Ensure we ignore "," responses
                 if (response.length() > 1) {
                     results.add(response);
@@ -228,10 +186,6 @@ public class Store implements StoreStrategy {
 
     @Override
     public String returnItem(String userID, String itemId, String dateOfReturn) {
-        logger.logAction(userID,
-                String.format("%s Request: %s, Params: [User: %s, Item id: %s, ReturnDate: %s]", generateTimestamp(),
-                        "returnItem",
-                        userID, itemId, dateOfReturn));
         try {
             IdUtil.checkHasAccess(serverInventory, userID, false /* = isManager */);
         } catch (Exception e) {
@@ -239,16 +193,9 @@ public class Store implements StoreStrategy {
         }
         String server = getServerFromId(itemId);
         if (server.equals(serverName)) {
-            return maybeReturnItem(userID, serverInventory, false /* = isForeignCustomer */, itemId,
-                    parseStringToDate(dateOfReturn),
-                    logger);
+            return maybeReturnItem(userID, serverInventory, false /* = isForeignCustomer */, itemId, parseStringToDate(dateOfReturn));
         } else {
-            // UDP to other server
-            logger.logAction(userID,
-                    String.format("%s UDP Request to server %s with Params: [User: %s, Item id: %s, ReturnDate: %s]",
-                            generateTimestamp(), server, userID, itemId, dateOfReturn));
-            return requestFromStore(RETURN_ITEM_REQ, getPortForServer(server), userID, itemId,
-                    dateOfReturn).trim();
+            return requestFromStore(RETURN_ITEM_REQ, getPortForServer(server), userID, itemId, dateOfReturn).trim();
         }
     }
 
@@ -286,10 +233,6 @@ public class Store implements StoreStrategy {
      */
     @Override
     public String exchangeItem(String customerID, String newItemID, String oldItemID, String dateOfReturn) {
-        logger.logAction(customerID,
-                String.format("%s Request: %s, Params: [User: %s, New Item id: %s, Old Item id: %s]",
-                        generateTimestamp(),
-                        "exchangeItem", customerID, newItemID, oldItemID));
         try {
             IdUtil.checkHasAccess(serverInventory, customerID, false /* = isManager */);
         } catch (Exception e) {
@@ -303,30 +246,21 @@ public class Store implements StoreStrategy {
         if (budget > 0) {
             return exchangeItem(customerID, oldItemID, newItemID, budget, parsedReturnDate);
         }
-
-        String message = exchangeResp.getValue();
-        logger.logAction(customerID, message);
-        UserLogger.logActionForUser(customerID, message);
-
-        return message;
+        return exchangeResp.getValue();
     }
 
     @Override
     public String addWaitList(String userID, String itemID) {
         String server = getServerFromId(itemID);
         if (serverName.equals(server)) {
-            String response = waitListUser(userID, itemID, serverInventory, logger, false /* = isForeignCustomer */);
-            logger.logAction(userID, response);
-            return response;
+            return waitListUser(userID, itemID, serverInventory, false /* = isForeignCustomer */);
         } else {
             return requestFromStore(WAIT_LIST_REQ, getPortForServer(server), userID, itemID);
         }
     }
 
-    private void updateItemQuantity(String userID, Item item, int newQuantity) {
+    private void updateItemQuantity(Item item, int newQuantity) {
         String itemId = item.getItemId();
-        int oldQuantity = item.getItemQuantity();
-        String message;
         if (newQuantity <= 0) {
             item.updateQuantity(newQuantity);
             int updatedQuantity = item.getItemQuantity();
@@ -337,34 +271,19 @@ public class Store implements StoreStrategy {
                 // method exits
                 inventoryCatalog.remove(itemId);
                 itemWaitList.remove(itemId);
-                // We keep this to ensure that any requests that came first before this cancel
-                // They will attempt to be put on the wait list but the above line will ensure it could not
-                message = String.format("%s Item id: %s was successfully deleted", generateTimestamp(), itemId);
-            } else {
-                message = String.format("%s Item id: %s was successfully updated quantity to %d", generateTimestamp(),
-                        itemId,
-                        updatedQuantity);
             }
-            UserLogger.logActionForUser(userID, message);
-            logger.logAction(userID, message);
         } else {
             item.updateQuantity(newQuantity);
-            message = String.format("%s Item id: %s quantity updated to %d from %d", generateTimestamp(), itemId,
-                    newQuantity, oldQuantity);
-            logger.logAction(userID, message);
-            UserLogger.logActionForUser(userID, message);
         }
     }
 
     private Pair<Integer, String> checkEligibleForExchange(String userId, String itemId, Date dateOfReturn) {
         String server = getServerFromId(itemId);
         if (server.equals(serverName)) {
-            return isEligibleForExchange(userId, false /* = isForeignCustomer */, serverInventory, itemId, dateOfReturn,
-                    logger);
+            return isEligibleForExchange(userId, false /* = isForeignCustomer */, serverInventory, itemId, dateOfReturn);
         } else {
             String response =
-                    requestFromStore(RETURN_ITEM_ELIGIBLE_REQ, getPortForServer(server), userId, itemId,
-                            parseDateToString(dateOfReturn))
+                    requestFromStore(RETURN_ITEM_ELIGIBLE_REQ, getPortForServer(server), userId, itemId, parseDateToString(dateOfReturn))
                             .trim();
             String[] values = response.split(",");
             return new Pair<>(Integer.parseInt(values[0]), values[1]);
@@ -375,12 +294,10 @@ public class Store implements StoreStrategy {
         String newItemServer = getServerFromId(newItemId);
         if (newItemServer.equals(serverName)) {
             Item item = inventoryCatalog.get(newItemId);
-            return UserItemTransactionUtil
-                    .exchangeItem(userId, budget, oldItemId, item, dateNow, serverInventory, logger);
+            return UserItemTransactionUtil.exchangeItem(userId, budget, oldItemId, item, dateNow, serverInventory);
         } else {
-            return requestFromStore(EXCHANGE_ITEM_REQ, getPortForServer(newItemServer), userId, Double.toString(budget),
-                    oldItemId,
-                    newItemId, parseDateToString(dateNow)).trim();
+            return requestFromStore(EXCHANGE_ITEM_REQ, getPortForServer(newItemServer), userId, Double.toString(budget), oldItemId,
+                                    newItemId, parseDateToString(dateNow)).trim();
         }
     }
 
