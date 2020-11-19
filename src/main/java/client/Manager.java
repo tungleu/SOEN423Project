@@ -43,9 +43,7 @@ public class Manager {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Please choose your province: QC, ON, BC");
         String province = scanner.next();
-        System.out.println("Please enter your id");
-        String IDNumber = scanner.next();
-        String clientID = province + "M" + IDNumber;
+        String clientID = province + "M1001";
         System.out.println("Your ID is :" + clientID);
         Manager manager = new Manager(clientID, province);
         try {
