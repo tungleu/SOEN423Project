@@ -36,6 +36,6 @@ public final class ReplicaConstants {
     public static final String LOG_REPLICA_REQUEST_RESULT = "Replica %s result for sequence number %d: {%s}";
     public static final String LOG_REPLICA_DATA_TRANSFER_REQUEST = "Replica %s received data transfer request";
 
-    public static final String REPLICA_NAME_DELIMETER = ":";
+    public static final String REPLICA_NAME_DELIMETER = "_";
 
 }
