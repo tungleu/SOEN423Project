@@ -8,6 +8,7 @@ import replica.data.ReplicaOneData;
 import replicaOne.model.Pair;
 import replicaOne.model.ServerInventory;
 import replicaOne.server.impl.Store;
+import replicaOne.server.util.data.UserDataLoader;
 import util.MessageUtil;
 
 import static common.ReplicaConstants.*;
@@ -36,6 +37,7 @@ public class ReplicaOne extends Replica {
             int port = serverPair.getValue();
 
             ServerInventory serverInventory = fetchServerInventory(serverName);
+            UserDataLoader.loadData(serverName, serverInventory);
             Store store = new Store(serverName, port, serverInventory);
             storeMap.put(serverName, store);
 
