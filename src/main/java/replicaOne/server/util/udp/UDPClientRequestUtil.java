@@ -44,7 +44,7 @@ public final class UDPClientRequestUtil {
                                 request.getPort()));
                 String responseString = new String(reply.getData());
                 System.out.println("Reply: " + responseString);
-                return responseString;
+                return responseString.trim();
             } else {
                 throw new Exception("Error: cannot serialize request object.");
             }
