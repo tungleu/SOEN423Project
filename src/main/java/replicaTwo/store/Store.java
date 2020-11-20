@@ -1,7 +1,6 @@
 package replicaTwo.store;
 
 import replica.data.ReplicaTwoData;
-import replicaTwo.data.inventory.Item;
 import replicaTwo.data.inventory.StoreInventory;
 import replicaTwo.data.sales.SalesManager;
 import replicaTwo.exception.*;
@@ -121,14 +120,14 @@ public class Store {
         this.requestDispatcher = new RequestDispatcherUDP(this.locationName, portsConfig);
     }
 
-    public Item addItem(String managerID, String itemID, String itemName, int quantity, int price) throws ManagerItemPriceMismatchException {
+    public String addItem(String managerID, String itemID, String itemName, int quantity, int price) throws ManagerItemPriceMismatchException {
         if(this.inventory.isItemPriceMismatch(itemID, price)) {
             throw new ManagerItemPriceMismatchException("Add item failed. item price does not match");
         }
 
         this.inventory.addItemToStock(itemID, itemName, quantity, price);
         this.automaticallyAssignItem(itemID);
-        return this.inventory.getItem(itemID);
+        return this.inventory.getItemDescription(itemID);
     }
 
     public String removeItem(String managerID, String itemID, int quantity) throws ManagerRemoveBeyondQuantityException, ManagerRemoveNonExistingItemException {

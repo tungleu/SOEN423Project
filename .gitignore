@@ -36,3 +36,4 @@ buildNumber.properties
 **/logs/**
 src/main/java/CORBA_FE/
 dsms.iml
+**/*.db
