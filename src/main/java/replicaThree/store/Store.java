@@ -39,7 +39,7 @@ public class Store implements StoreStrategy {
 
     public String addItem(String managerID, String itemID, String itemName, int quantity, int price) {
         if (!itemID.substring(0, 2).equals(this.province.toString())) {
-            return String.format(ADD_ITEM_ANOTHER_STORE, itemID);
+            return String.format(ADD_ITEM_ANOTHER_STORE, itemName);
         }
         if (this.inventory.containsKey(itemID)) {
             String[] info = this.inventory.get(itemID).split(",");
