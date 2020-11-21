@@ -12,8 +12,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
-
 
 public class Store implements StoreStrategy {
 
@@ -25,6 +27,7 @@ public class Store implements StoreStrategy {
     private HashMap<String, Integer> portMap;
     private ArrayList<String> purchaseLog;
     private ServerData serverData;
+    private DateFormat format;
 
     public Store(ServerData serverData) throws IOException {
         this.serverData = serverData;
@@ -34,6 +37,7 @@ public class Store implements StoreStrategy {
         this.customerClients = serverData.getCustomerClients();
         this.inventory = serverData.getInventory();
         this.waitlist = serverData.getWaitlist();
+        this.format = new SimpleDateFormat("ddMMyyyy");
     }
 
 
@@ -57,11 +61,12 @@ public class Store implements StoreStrategy {
         if (this.waitlist.containsKey(itemID)) {
             PriorityQueue<String> queue = this.waitlist.get(itemID);
             for (String id : queue) {
+                Date now = new Date();
                 if (id.startsWith(this.province.toString())) {
-                    this.purchaseItem(id, itemID, new Date().toString());
+                    this.purchaseItem(id, itemID, this.format.format(now));
                 } else {
                     int port = this.portMap.get(id.substring(0, 2));
-                    String message = "PURCHASE_2," + id + "," + itemID + "," + new Date().toString();
+                    String message = "PURCHASE_2," + id + "," + itemID + "," + this.format.format(now);
                     this.sendMessage(port, message);
                 }
             }
@@ -300,16 +305,20 @@ public class Store implements StoreStrategy {
     }
 
     public String checkReturnElgible(String customerID, String itemID, String date) {
-        for (String log : this.purchaseLog) {
-            String[] logParams = log.split(",");
-            if (logParams[0].equals(itemID) && logParams[1].equals(customerID)) {
-                Date datePurchased = new Date(logParams[2]);
-                long day30 = 30l * 24 * 60 * 60 * 1000;
-                if (new Date(date).compareTo(new Date(datePurchased.getTime() + day30)) < 0) {
-                    return "eligible";
-                } else
-                    return "expired";
+        try {
+            for (String log : this.purchaseLog) {
+                String[] logParams = log.split(",");
+                if (logParams[0].equals(itemID) && logParams[1].equals(customerID)) {
+                    Date datePurchased = this.format.parse(logParams[2]);
+                    long day30 = 30l * 24 * 60 * 60 * 1000;
+                    if (this.format.parse(date).compareTo(new Date(datePurchased.getTime() + day30)) < 0) {
+                        return "eligible";
+                    } else
+                        return "expired";
+                }
             }
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
         return "not purchased";
     }
