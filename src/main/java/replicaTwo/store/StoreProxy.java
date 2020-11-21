@@ -34,7 +34,7 @@ public class StoreProxy implements StoreStrategy {
         try {
             this.validateItem(managerID, itemID);
             String itemName = this.store.removeItem(managerID, itemID, quantity);
-            return String.format(REMOVE_ITEM_SUCCESS, itemID, itemName);
+            return String.format(REMOVE_ITEM_SUCCESS, itemName, itemID);
         } catch(ManagerRemoveNonExistingItemException e) {
             return String.format(REMOVE_ITEM_NOT_EXISTS, itemID);
         } catch (ManagerRemoveBeyondQuantityException e) {
