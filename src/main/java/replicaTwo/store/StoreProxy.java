@@ -56,6 +56,8 @@ public class StoreProxy implements StoreStrategy {
         try {
             this.store.purchaseItem(customerID, itemID, dateOfPurchase);
             return String.format(PURCHASE_ITEM_SUCCESS, itemID);
+        } catch(ItemDoesNotExistException e) {
+            return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, itemID);
         } catch(ItemOutOfStockException e) {
             return String.format(PURCHASE_ITEM_OUT_OF_STOCK, itemID);
         } catch(NotEnoughFundsException e) {
@@ -94,7 +96,9 @@ public class StoreProxy implements StoreStrategy {
         try {
             this.store.exchangeItem(customerID, newItemID, oldItemID, dateOfExchange);
             return String.format(EXCHANGE_ITEM_SUCCESS, oldItemID, newItemID);
-        }  catch (ReturnPolicyException e) {
+        } catch(ItemDoesNotExistException e) {
+            return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, newItemID);
+        } catch (ReturnPolicyException e) {
             return String.format(EXCHANGE_ITEM_POLICY_ERROR, oldItemID);
         } catch (CustomerNeverPurchasedItemException e) {
             return String.format(EXCHANGE_ITEM_CUSTOMER_NEVER_PURCHASED, oldItemID);

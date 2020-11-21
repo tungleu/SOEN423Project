@@ -3,6 +3,7 @@ package replicaTwo.udp.request;
 
 import replicaTwo.data.inventory.StoreInventory;
 import replicaTwo.data.sales.SalesManager;
+import replicaTwo.exception.ItemDoesNotExistException;
 import replicaTwo.exception.ItemOutOfStockException;
 import replicaTwo.exception.NotEnoughFundsException;
 
@@ -28,7 +29,9 @@ public class RequestHandlerUDP implements RequestHandler {
         StringBuilder result = new StringBuilder();
         int itemPrice = this.storeInventory.getItemPrice(itemID);
 
-        if(!this.storeInventory.isItemInStockWithQuantity(itemID)) {
+        if(!this.storeInventory.isItemInStock(itemID)) {
+            result.append(ItemDoesNotExistException.class.getSimpleName());
+        } else if(!this.storeInventory.isItemInStockWithQuantity(itemID)) {
             result.append(ItemOutOfStockException.class.getSimpleName());
         } else if(budget < itemPrice) {
             result.append(NotEnoughFundsException.class.getSimpleName());

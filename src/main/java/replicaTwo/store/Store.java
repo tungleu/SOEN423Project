@@ -154,7 +154,7 @@ public class Store {
     }
 
     public String purchaseItem(String customerID, String itemID, String dateOfPurchase) throws ItemOutOfStockException,
-            NotEnoughFundsException, ExternalStorePurchaseLimitException {
+            NotEnoughFundsException, ExternalStorePurchaseLimitException, ItemDoesNotExistException {
         String targetStore = StoreUtils.getStoreFromDescriptor(itemID);
         long purchaseTimestamp = StoreUtils.parseDate(dateOfPurchase);
 
@@ -191,7 +191,7 @@ public class Store {
     }
 
     public String exchangeItem(String customerID, String newItemID, String oldItemID, String dateOfExchange) throws ReturnPolicyException,
-            CustomerNeverPurchasedItemException, ExternalStorePurchaseLimitException, ItemOutOfStockException, NotEnoughFundsException
+            CustomerNeverPurchasedItemException, ExternalStorePurchaseLimitException, ItemOutOfStockException, NotEnoughFundsException, ItemDoesNotExistException
     {
         String newItemTargetStore = StoreUtils.getStoreFromDescriptor(newItemID);
         String oldItemTargetStore = StoreUtils.getStoreFromDescriptor(oldItemID);
@@ -268,11 +268,13 @@ public class Store {
         return purchaseTimestamp;
     }
 
-    private int verifyLocalStorePurchase(String customerID, String itemID) throws ItemOutOfStockException, NotEnoughFundsException {
+    private int verifyLocalStorePurchase(String customerID, String itemID) throws ItemOutOfStockException, NotEnoughFundsException, ItemDoesNotExistException {
+        if(!this.inventory.isItemInStock(itemID)) {
+            throw new ItemDoesNotExistException("item with ID: " + itemID + " does not exist.");
+        }
         if(!this.inventory.isItemInStockWithQuantity((itemID))) {
             throw new ItemOutOfStockException("item with ID: " + itemID + " is out of stock.");
         }
-
         int itemPrice = this.inventory.getItemPrice(itemID);
         if(!this.salesManager.isCustomerWithEnoughFunds(customerID, itemPrice)) {
             throw new NotEnoughFundsException("Customer does not have enough funds!");
@@ -285,6 +287,9 @@ public class Store {
                 Arrays.asList(PURCHASE_ITEM, String.valueOf(this.salesManager.getCustomerBudget(customerID)), itemID),
                 remoteStore).get(0);
 
+        if(purchaseResult.equals(ItemDoesNotExistException.class.getSimpleName())) {
+            throw new ItemOutOfStockException("item with ID: " + itemID + " does not exist.");
+        }
         if(purchaseResult.equals(ItemOutOfStockException.class.getSimpleName())) {
             throw new ItemOutOfStockException("item with ID: " + itemID + " is out of stock.");
         }
@@ -302,7 +307,7 @@ public class Store {
         }
     }
 
-    private void performLocalPurchase(String customerID, String itemID, long purchaseTimestamp) throws NotEnoughFundsException, ItemOutOfStockException {
+    private void performLocalPurchase(String customerID, String itemID, long purchaseTimestamp) throws NotEnoughFundsException, ItemOutOfStockException, ItemDoesNotExistException {
         int itemPrice = this.verifyLocalStorePurchase(customerID, itemID);
         this.salesManager.checkoutLocalPurchase(customerID, itemID, itemPrice, purchaseTimestamp);
         this.inventory.reduceItemQuantityInStock(itemID);
