@@ -3,6 +3,7 @@ package frontend;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import static common.ReplicaConstants.*;
 import static common.ReplicaConstants.REPLICA_MANAGER_ONE;
@@ -12,11 +13,14 @@ public class Response {
     private final long timeCreated;
     private final Map<String, String> responses;
     private long sequenceNumber;
+    private final Logger logger;
+    private final Map<String, List<String>> reverseResponses;
 
-    public Response() {
+    public Response(Logger logger) {
         this.timeCreated = System.currentTimeMillis();
         this.responses = new ConcurrentHashMap<>();
-
+        this.logger = logger;
+        this.reverseResponses = new ConcurrentHashMap<>();
     }
 
     public Collection<String> getResponses() {
@@ -32,6 +36,7 @@ public class Response {
     }
 
     public String getFinalResponse() {
+        logger.info("Final response for sequence number " + sequenceNumber + ": " + reverseResponses);
         Set<String> values = new HashSet<>();
         for (String value : this.getResponses()) {
             if (!values.add(value))
@@ -42,11 +47,12 @@ public class Response {
 
     public void addResponse(String replicaManager, String response) {
         this.responses.put(replicaManager, response);
+        this.reverseResponses.computeIfAbsent(response, k -> new ArrayList<>());
+        this.reverseResponses.get(response).add(replicaManager);
     }
 
     public boolean isEqual() {
         return this.getResponses().stream().distinct().count() <= 1;
-
     }
 
     public synchronized long getSequenceNumber() {
