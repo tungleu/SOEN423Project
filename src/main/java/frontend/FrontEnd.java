@@ -17,7 +17,11 @@ import util.ChecksumUtil;
 import util.MessageUtil;
 import util.ReplicaUtil;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
 
 
 public class FrontEnd extends FrontEndPOA {
@@ -27,8 +31,10 @@ public class FrontEnd extends FrontEndPOA {
     private final ORB orb;
     private final String CORBA_CLIENT_NAME;
     private final Map<String, Response> responseMap;
+    private final Logger logger;
 
     public FrontEnd(String name, ORB orb, Map<String, Response> responseMap) throws Exception {
+        logger = Logger.getLogger(name);
         this.orb = orb;
         this.CORBA_CLIENT_NAME = name;
         this.responseMap = responseMap;
@@ -36,7 +42,7 @@ public class FrontEnd extends FrontEndPOA {
         clientReplicaChannel = new JChannel().setReceiver(replicaResponseHandler()).setName(CORBA_CLIENT_NAME);
         clientRMChannel = new JChannel().setName(CORBA_CLIENT_NAME);
         this.connectClusters();
-
+        this.initLogger();
     }
 
     @Override
@@ -96,23 +102,18 @@ public class FrontEnd extends FrontEndPOA {
     private String marshallRequest(RequestType requestType, List<String> params) {
         String checksum = ChecksumUtil.generateChecksumSHA256(params);
         OperationRequest operationRequest = new OperationRequest(requestType, params, checksum, CORBA_CLIENT_NAME);
-        Response response = new Response();
+        Response response = new Response(logger);
         responseMap.put(checksum, response);
         try {
             clientSequencerChannel.send(MessageUtil.createMessageFor(null, operationRequest));
-            while (System.currentTimeMillis() - response.getInitialTime() < 5000 && response.getResponses().size() != 3) {
-            }
+            while (System.currentTimeMillis() - response.getInitialTime() < 5000 && response.getResponses().size() != 3) {}
             if (!response.isEqual() || response.getResponses().size() != 3) {
                 this.handleFailure(response);
             }
-            return response.getFinalResponse();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "";
-
+        return response.getFinalResponse();
     }
 
     private void handleFailure(Response response) {
@@ -148,6 +149,11 @@ public class FrontEnd extends FrontEndPOA {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
+    private void initLogger() throws IOException {
+        String logFile = System.getProperty("user.dir") + "/src/main/java/frontend/" + CORBA_CLIENT_NAME + ".log";
+        Handler fileHandler = new FileHandler(logFile, true);
+        this.logger.addHandler(fileHandler);
     }
 }
