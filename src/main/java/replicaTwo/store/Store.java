@@ -176,7 +176,7 @@ public class Store {
         collectedItems.addAll(this.requestDispatcher.broadcastCollect(Arrays.asList(FIND_ITEM, itemName)));
         return collectedItems.stream()
                 .filter(itemDesc -> itemDesc.contains("("))
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining(","));
     }
 
     public String returnItem(String customerID, String itemID, String dateOfReturn) throws CustomerNeverPurchasedItemException, ReturnPolicyException {
