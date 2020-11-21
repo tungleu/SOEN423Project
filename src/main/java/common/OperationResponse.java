@@ -14,6 +14,7 @@ public final class OperationResponse {
     public static final String REMOVE_ITEM_ANOTHER_STORE = "Cannot update item %s, doesn’t belong in store";
 
     public static final String PURCHASE_ITEM_SUCCESS = "Purchase item %s successful";
+    public static final String PURCHASE_ITEM_DOES_NOT_EXIST = "Purchase un-successfully, item with item id %s does not exists in the store.";
     public static final String PURCHASE_ITEM_OUT_OF_STOCK = "Cannot purchase item %s, do you want to be added to the waitlist?";
     public static final String PURCHASE_ITEM_NOT_ENOUGH_FUNDS = "Cannot purchase item %s, not enough funds";
     public static final String PURCHASE_ITEM_ANOTHER_STORE_LIMIT = "Cannot purchase item %s, limited to max 1 per external customer";
