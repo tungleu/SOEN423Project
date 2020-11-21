@@ -4,7 +4,6 @@ import replicaOne.model.Item;
 import replicaOne.model.Pair;
 import replicaOne.model.Request;
 import replicaOne.model.ServerInventory;
-import replicaOne.server.util.TimeUtil;
 import replicaOne.server.util.user.UserItemTransactionUtil;
 
 import java.io.ByteArrayInputStream;
@@ -16,6 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 import static common.OperationResponse.FIND_ITEM_SINGLE_SUCCESS;
+import static common.OperationResponse.PURCHASE_ITEM_DOES_NOT_EXIST;
 import static replicaOne.server.util.IdUtil.getServerFromId;
 import static replicaOne.server.util.TimeUtil.generateTimestamp;
 import static replicaOne.server.util.TimeUtil.parseStringToDate;
@@ -45,13 +45,11 @@ public class UDPServerRequestHandler {
                     throw new Exception("Could not parse requests. " + ERROR_MESSAGE);
                 }
                 byte[] responseByte = response.getBytes();
-                DatagramPacket reply =
-                        new DatagramPacket(responseByte, responseByte.length, request.getAddress(), request.getPort());
+                DatagramPacket reply = new DatagramPacket(responseByte, responseByte.length, request.getAddress(), request.getPort());
                 aSocket.send(reply);
                 System.out.println(
-                        String.format("%s Sending response back to server //%s:%d", generateTimestamp(),
-                                request.getAddress().toString(),
-                                request.getPort()));
+                        String.format("%s Sending response back to server //%s:%d", generateTimestamp(), request.getAddress().toString(),
+                                      request.getPort()));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -105,8 +103,7 @@ public class UDPServerRequestHandler {
         StringBuilder sb = new StringBuilder();
         serverInventory.getInventoryCatalog().values().forEach((item) -> {
             if (item.getItemName().equals(itemName)) {
-                sb.append(String.format(FIND_ITEM_SINGLE_SUCCESS, item.getItemId(), item.getItemQuantity(),
-                        item.getPrice()));
+                sb.append(String.format(FIND_ITEM_SINGLE_SUCCESS, item.getItemId(), item.getItemQuantity(), item.getPrice()));
                 sb.append(",");
             }
         });
@@ -116,21 +113,15 @@ public class UDPServerRequestHandler {
     private String maybePurchaseItem(String userID, String itemID, String date) {
         Item item = serverInventory.getInventoryCatalog().get(itemID);
         if (item == null) {
-            String message =
-                    String.format("%s Item %s does not exist in this store. Please try a different item id.",
-                            TimeUtil.generateTimestamp(),
-                            itemID);
-            return message;
+            return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, itemID);
         }
         return UserItemTransactionUtil
-                .maybePurchaseItem(userID, item, parseStringToDate(date), serverInventory,
-                        true /* = isForeignCustomer */);
+                .maybePurchaseItem(userID, item, parseStringToDate(date), serverInventory, true /* = isForeignCustomer */);
     }
 
     private String maybeReturnItem(String userID, String itemID, String date) {
         return UserItemTransactionUtil
-                .maybeReturnItem(userID, serverInventory, true /* = isForeignCustomer */, itemID,
-                        parseStringToDate(date));
+                .maybeReturnItem(userID, serverInventory, true /* = isForeignCustomer */, itemID, parseStringToDate(date));
     }
 
     private String getBudget(String userId) {
@@ -151,8 +142,7 @@ public class UDPServerRequestHandler {
     private String checkReturnEligibility(String userId, String itemId, String date) {
         Date dateOfReturn = parseStringToDate(date);
         Pair<Integer, String> result =
-                isEligibleForExchange(userId, serverName.equals(getServerFromId(itemId)), serverInventory, itemId,
-                        dateOfReturn);
+                isEligibleForExchange(userId, serverName.equals(getServerFromId(itemId)), serverInventory, itemId, dateOfReturn);
         return result.getKey() + "," + result.getValue();
     }
 
@@ -165,7 +155,6 @@ public class UDPServerRequestHandler {
         Date dateNow = parseStringToDate(params.get(4));
 
         Item itemToPurchase = serverInventory.getInventoryCatalog().get(itemIdToBuy);
-        return UserItemTransactionUtil
-                .exchangeItem(userId, budget, itemIdToReturn, itemToPurchase, dateNow, serverInventory);
+        return UserItemTransactionUtil.exchangeItem(userId, budget, itemIdToReturn, itemToPurchase, dateNow, serverInventory);
     }
 }

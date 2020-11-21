@@ -135,8 +135,7 @@ public class Store implements StoreStrategy {
             // Perform local server check
             Item item = inventoryCatalog.get(itemId);
             if (item == null) {
-                return String.format("%s Purchase un-successfully, item with item id %s does not exists in the store.", generateTimestamp(),
-                                     itemId);
+                return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, itemId);
             }
             response = maybePurchaseItem(userID, item, parsedDate, serverInventory, false /* = isForeignCustomer */);
         } else {
