@@ -43,7 +43,7 @@ public class ReplicaOne extends Replica {
             Store store = new Store(serverName, i, serverInventory);
             storeMap.put(serverName, store);
 
-            startUDPServer(ports[i], serverInventory);
+            udpServers.add(startUDPServer(logger, ports[i], serverInventory, isRunning));
         }
     }
 
