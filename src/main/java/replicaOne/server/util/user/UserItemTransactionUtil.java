@@ -57,7 +57,7 @@ public final class UserItemTransactionUtil {
     public static String maybeReturnItem(String userID, ServerInventory serverInventory, boolean isForeignCustomer, String itemId,
                                          Date dateOfReturn) {
         Map<String, Map<String, List<PurchaseLog>>> userPurchaseLogs = serverInventory.getUserPurchaseLogs();
-        Map<String, List<PurchaseLog>> userPurchaseLog = userPurchaseLogs.get(userID);
+        Map<String, List<PurchaseLog>> userPurchaseLog = userPurchaseLogs.computeIfAbsent(userID, k -> new ConcurrentHashMap<>());
         List<PurchaseLog> purchaseLog = userPurchaseLog.get(itemId);
 
         String message;
@@ -69,8 +69,7 @@ public final class UserItemTransactionUtil {
                 message = String.format(RETURN_ITEM_POLICY_ERROR, itemId);
             } else {
                 PurchaseLog mostRecentBoughtDate = purchaseLog.remove(index);
-                UserBudgetUtil
-                        .updateUserBudget(userID, serverInventory, isForeignCustomer, -mostRecentBoughtDate.getPrice());
+                UserBudgetUtil.updateUserBudget(userID, serverInventory, isForeignCustomer, -mostRecentBoughtDate.getPrice());
 
                 // Update catalog with refunded item
                 updateInventoryForRefundedItem(serverInventory, itemId, mostRecentBoughtDate);
