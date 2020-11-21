@@ -18,6 +18,7 @@ import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static replicaTwo.udp.request.RequestTypesUDP.*;
 
@@ -173,7 +174,9 @@ public class Store {
     public String findItem(String customerID, String itemName) {
         List<String> collectedItems = new ArrayList<>(this.inventory.getStockByName(itemName));
         collectedItems.addAll(this.requestDispatcher.broadcastCollect(Arrays.asList(FIND_ITEM, itemName)));
-        return String.join(", ", collectedItems);
+        return collectedItems.stream()
+                .filter(itemDesc -> itemDesc.contains("("))
+                .collect(Collectors.joining(", "));
     }
 
     public String returnItem(String customerID, String itemID, String dateOfReturn) throws CustomerNeverPurchasedItemException, ReturnPolicyException {
