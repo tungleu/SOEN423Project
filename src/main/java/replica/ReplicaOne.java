@@ -5,7 +5,6 @@ import org.jgroups.Address;
 import org.jgroups.Message;
 import replica.common.Replica;
 import replica.data.ReplicaOneData;
-import replicaOne.model.Pair;
 import replicaOne.model.ServerInventory;
 import replicaOne.server.impl.Store;
 import replicaOne.server.util.data.UserDataLoader;
@@ -17,31 +16,34 @@ import static replicaOne.server.util.udp.UDPServerStarterUtil.startUDPServer;
 
 public class ReplicaOne extends Replica {
 
-    private final static Pair[] SERVERS = new Pair[] {
-      new Pair(QC_SERVER_NAME, QC_PORT),
-      new Pair(BC_SERVER_NAME, BC_PORT),
-      new Pair(ON_SERVER_NAME, ON_PORT)
-    };
-
     private final ReplicaOneData replicaOneData;
+    private boolean isFreshStart;
 
-    public ReplicaOne(String name, ReplicaOneData replicaOneData) throws Exception {
+    public ReplicaOne(String name, ReplicaOneData replicaOneData, boolean isFreshStart) throws Exception {
         super(name);
         this.replicaOneData = replicaOneData;
+        this.isFreshStart = isFreshStart;
     }
 
     @Override
     protected void initReplicaStores() {
-        for (Pair<String, Integer> serverPair: SERVERS) {
-            String serverName = serverPair.getKey();
-            int port = serverPair.getValue();
+        int[] ports = new int[]{QC_PORT, BC_PORT, ON_PORT};
+        if (!isFreshStart) {
+            for (int i = 0; i < ports.length; i++) {
+                ports[i] += ports.length;
+            }
+        }
+        for (int i = 0; i < SERVER_NAMES.length; i++) {
+            String serverName = SERVER_NAMES[i];
 
             ServerInventory serverInventory = fetchServerInventory(serverName);
+            serverInventory.setPorts(ports);
+
             UserDataLoader.loadData(serverName, serverInventory);
-            Store store = new Store(serverName, port, serverInventory);
+            Store store = new Store(serverName, i, serverInventory);
             storeMap.put(serverName, store);
 
-            startUDPServer(port, serverInventory);
+            startUDPServer(ports[i], serverInventory);
         }
     }
 

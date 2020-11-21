@@ -15,6 +15,7 @@ public class ServerInventory implements Serializable {
     private final Map<String, Map<String, List<PurchaseLog>>> userPurchaseLogs;
     private final Set<String> foreignCustomers;
     private final String serverName;
+    private int[] ports;
 
     public ServerInventory(String serverName) {
         this.inventoryCatalog = new ConcurrentHashMap<>();
@@ -47,5 +48,13 @@ public class ServerInventory implements Serializable {
 
     public String getServerName() {
         return serverName;
+    }
+
+    public void setPorts(int[] ports) {
+        this.ports = ports;
+    }
+
+    public int[] getPorts() {
+        return ports;
     }
 }

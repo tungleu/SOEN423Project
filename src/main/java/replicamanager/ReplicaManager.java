@@ -9,7 +9,7 @@ import util.MessageUtil;
 import util.ReplicaUtil;
 
 import java.io.IOException;
-import java.util.Stack;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -26,7 +26,7 @@ public class ReplicaManager {
     private String replicaName;
     private final JChannel clientRMChannel;
     private final JChannel rmReplicaChannel;
-    private final Stack<Long> failures;
+    private final ConcurrentLinkedDeque<Long> failures;
 
     private Replica replicaServer;
     private final Logger logger;
@@ -35,7 +35,7 @@ public class ReplicaManager {
         this.name = name;
         clientRMChannel = new JChannel().setReceiver(clientRequestHandler()).setName(name);
         rmReplicaChannel = new JChannel().setReceiver(replicaRequestHandler()).setName(name);
-        failures = new Stack<>();
+        failures = new ConcurrentLinkedDeque<>();
         logger = Logger.getLogger(name);
     }
 
@@ -58,7 +58,7 @@ public class ReplicaManager {
             long failedSequenceNumber = Long.parseLong(udpRequestMessage.getParameters().get(0));
             logger.info(String.format("Received error request from CORBA FE for message with sequence number %d", failedSequenceNumber));
 
-            if (failures.peek() + 1 != failedSequenceNumber) {
+            if (!failures.isEmpty() && failures.peek() + 1 != failedSequenceNumber) {
                 logger.info(String.format("Error message with sequence number %d not consecutive, restarting count.", failedSequenceNumber));
                 failures.clear();
             }

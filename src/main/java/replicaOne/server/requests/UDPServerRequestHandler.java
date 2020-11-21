@@ -155,6 +155,8 @@ public class UDPServerRequestHandler {
         String dateNow = params.get(4);
 
         Item itemToPurchase = serverInventory.getInventoryCatalog().get(itemIdToBuy);
-        return UserItemTransactionUtil.exchangeItem(userId, budget, itemIdToReturn, itemIdToBuy, itemToPurchase, dateNow, serverInventory);
+        return UserItemTransactionUtil
+                .exchangeItem(serverInventory.getPorts(), userId, budget, itemIdToReturn, itemIdToBuy, itemToPurchase, dateNow,
+                              serverInventory);
     }
 }

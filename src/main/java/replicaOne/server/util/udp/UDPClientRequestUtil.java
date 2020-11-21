@@ -24,7 +24,6 @@ public final class UDPClientRequestUtil {
     public static final int BC_PORT = 1012;
     public static final int ON_PORT = 1013;
 
-    public static final int[] PORTS = new int[]{QC_PORT, BC_PORT, ON_PORT};
     static final int MAX_BYTE_BUFFER = 65508;
 
     private UDPClientRequestUtil() {
@@ -54,14 +53,14 @@ public final class UDPClientRequestUtil {
         return "Error: No response.";
     }
 
-    public static int getPortForServer(String server) {
+    public static int getPortForServer(int[] ports, String server) {
         switch (server) {
             case QC_SERVER_NAME:
-                return QC_PORT;
+                return ports[0];
             case BC_SERVER_NAME:
-                return BC_PORT;
+                return ports[1];
             default:
-                return ON_PORT;
+                return ports[2];
         }
     }
 
