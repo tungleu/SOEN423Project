@@ -2,7 +2,6 @@ package replicaTwo.store;
 
 import common.StoreStrategy;
 import replica.data.ReplicaTwoData;
-import replicaTwo.data.inventory.Item;
 import replicaTwo.exception.*;
 import java.util.Map;
 
@@ -20,8 +19,8 @@ public class StoreProxy implements StoreStrategy {
     public String addItem(String managerID, String itemID, String itemName, int quantity, int price) {
         try {
             this.validateItem(managerID, itemID);
-            Item item = this.store.addItem(managerID, itemID, itemName, quantity, price);
-            return String.format(ADD_ITEM_SUCCESS, item.getItemName(), item.getItemID(), item.getQuantity(), item.getPrice());
+            this.store.addItem(managerID, itemID, itemName, quantity, price);
+            return String.format(ADD_ITEM_SUCCESS, itemName, itemID, quantity, price);
         }  catch (ManagerItemPriceMismatchException e) {
             return String.format(ADD_ITEM_INVALID_PRICE, price);
         } catch(ManagerExternalStoreItemException e) {

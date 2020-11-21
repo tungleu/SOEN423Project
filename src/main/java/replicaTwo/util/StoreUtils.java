@@ -8,9 +8,10 @@ import java.util.Date;
 public class StoreUtils {
     private final static String DATE_FORMAT = "ddMMyyyy";
     private final static int RETURN_POLICY_DAYS = 30;
-    private final static DateFormat sourceFormat = new SimpleDateFormat(DATE_FORMAT);
 
-    public static Long parseDate(String date) {
+
+    public synchronized static Long parseDate(String date) {
+        DateFormat sourceFormat = new SimpleDateFormat(DATE_FORMAT);
         Date parsedDate = new Date();
         try {
             parsedDate = sourceFormat.parse(date);
@@ -20,7 +21,8 @@ public class StoreUtils {
         return parsedDate.getTime();
     }
 
-    public static String getCurrentDateString() {
+    public synchronized static String getCurrentDateString() {
+        DateFormat sourceFormat = new SimpleDateFormat(DATE_FORMAT);
         return sourceFormat.format(new Date(System.currentTimeMillis()));
     }
 
