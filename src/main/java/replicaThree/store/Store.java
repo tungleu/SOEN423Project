@@ -184,7 +184,7 @@ public class Store implements StoreStrategy {
     }
 
     public synchronized String findItem(String customerID, String itemName) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(itemName).append(": {");
         sb.append(this.findLocalItem(itemName));
         String message = "ITEM_INFO," + itemName;
         for (Map.Entry<String, Integer> entry : this.portMap.entrySet()) {
@@ -195,6 +195,9 @@ public class Store implements StoreStrategy {
                 sb.append(",");
             sb.append(this.sendMessage(entry.getValue(), message).trim());
         }
+        if (sb.charAt(sb.length() - 1) == ',')
+            sb.deleteCharAt(sb.length() - 1);
+        sb.append("}");
         return sb.toString();
     }
 
@@ -206,7 +209,7 @@ public class Store implements StoreStrategy {
             int quantity = Integer.parseInt(itemInfo[1]);
             int price = Integer.parseInt(itemInfo[2]);
             if (itemName.trim().equals(name)) {
-                sb.append(String.format(FIND_ITEM_SINGLE_SUCCESS, name, quantity, price));
+                sb.append(String.format(FIND_ITEM_SINGLE_SUCCESS, entry.getKey(), quantity, price));
                 sb.append(",");
             }
         }
