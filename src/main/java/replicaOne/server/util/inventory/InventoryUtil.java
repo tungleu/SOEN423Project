@@ -94,7 +94,9 @@ public final class InventoryUtil {
         purchaseLog.sort(Comparator.comparing(PurchaseLog::getDate));
         while (index < purchaseLog.size()) {
             PurchaseLog log = purchaseLog.get(index);
-            if (returnDate.getTime() - log.getDate().getTime() <= MAX_RETURN_DAYS_IN_MILLIS) {
+            System.out.println(log.getDate());
+            long diff = returnDate.getTime() - log.getDate().getTime();
+            if (diff >= 0 && diff <= MAX_RETURN_DAYS_IN_MILLIS) {
                 return index;
             }
             index++;

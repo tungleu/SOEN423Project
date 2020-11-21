@@ -13,8 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static common.OperationResponse.*;
 import static replicaOne.server.requests.RequestType.RETURN_ITEM_REQ;
 import static replicaOne.server.util.IdUtil.getServerFromId;
-import static replicaOne.server.util.TimeUtil.generateTimestamp;
-import static replicaOne.server.util.TimeUtil.parseDateToString;
+import static replicaOne.server.util.TimeUtil.*;
 import static replicaOne.server.util.inventory.InventoryUtil.findPossibleValidReturnDate;
 import static replicaOne.server.util.inventory.InventoryUtil.maybeLendItemsToWaitList;
 import static replicaOne.server.util.udp.UDPClientRequestUtil.getPortForServer;
@@ -72,7 +71,7 @@ public final class UserItemTransactionUtil {
                 UserBudgetUtil.updateUserBudget(userID, serverInventory, isForeignCustomer, -mostRecentBoughtDate.getPrice());
 
                 // Update catalog with refunded item
-                updateInventoryForRefundedItem(serverInventory, itemId, mostRecentBoughtDate);
+                updateInventoryForRefundedItem(serverInventory, itemId);
 
                 // Remove purchase log if no more items to refund possible
                 if (purchaseLog.isEmpty()) {
@@ -89,14 +88,18 @@ public final class UserItemTransactionUtil {
         return message;
     }
 
-    public static String exchangeItem(String userId, int budget, String itemIdToReturn, Item itemToPurchase, Date dateNow,
-                                      ServerInventory serverInventory) {
+    public static String exchangeItem(String userId, int budget, String itemIdToReturn, String itemToBuy, Item itemToPurchase,
+                                      String dateNow, ServerInventory serverInventory) {
         boolean isForeignCustomer = !getServerFromId(userId).equals(serverInventory.getServerName());
         boolean isItemToReturnLocal = getServerFromId(itemIdToReturn).equals(serverInventory.getServerName());
 
         // Completed ignore steps if they already purchased from store as foreign customer
         if (isForeignCustomer && serverInventory.getForeignCustomers().contains(userId) && !isItemToReturnLocal) {
             return String.format(EXCHANGE_ITEM_ANOTHER_STORE_LIMIT, itemToPurchase.getItemId(), itemIdToReturn);
+        }
+
+        if (itemToPurchase == null) {
+            return String.format(EXCHANGE_ITEM_OUT_OF_STOCK, itemIdToReturn, itemToBuy, itemToBuy);
         }
 
         String message;
@@ -107,20 +110,20 @@ public final class UserItemTransactionUtil {
             // successfully, we can
             // purchase the item
             if (budget < itemToPurchase.getPrice()) {
-                message = String.format(EXCHANGE_ITEM_NOT_ENOUGH_FUNDS, itemToPurchase.getItemId(), itemIdToReturn, userId);
+                message = String.format(EXCHANGE_ITEM_NOT_ENOUGH_FUNDS, itemIdToReturn, itemToPurchase.getItemId(), userId);
             } else if (itemToPurchase.getItemQuantity() < 1) {
-                message = String.format(EXCHANGE_ITEM_OUT_OF_STOCK, itemToPurchase.getItemId(), itemIdToReturn, itemToPurchase.getItemId());
+                message = String.format(EXCHANGE_ITEM_OUT_OF_STOCK, itemIdToReturn, itemToPurchase.getItemId(), itemToPurchase.getItemId());
             } else {
                 // 2. Perform return item, if at this point the return item fails due to manager removed item we stop
                 // and don't do anything
                 String returnItemResponse;
                 if (isItemToReturnLocal) {
-                    returnItemResponse = maybeReturnItem(userId, serverInventory, isForeignCustomer, itemIdToReturn, dateNow);
+                    returnItemResponse =
+                            maybeReturnItem(userId, serverInventory, isForeignCustomer, itemIdToReturn, parseStringToDate(dateNow));
                 } else {
                     String server = getServerFromId(itemIdToReturn);
                     returnItemResponse =
-                            requestFromStore(RETURN_ITEM_REQ, getPortForServer(server), userId, itemIdToReturn, parseDateToString(dateNow))
-                                    .trim();
+                            requestFromStore(RETURN_ITEM_REQ, getPortForServer(server), userId, itemIdToReturn, dateNow).trim();
                 }
 
                 message = returnItemResponse;
@@ -130,28 +133,18 @@ public final class UserItemTransactionUtil {
                 // that we are able to purchase it as we first locked the item being purchased to prevent others from
                 // doing so concurrently
                 if (returnItemResponse.contains("successful")) {
-                    maybePurchaseItem(userId, itemToPurchase, dateNow, serverInventory, isForeignCustomer);
-                    message = String.format(EXCHANGE_ITEM_SUCCESS, itemToPurchase.getItemId(), itemIdToReturn);
+                    maybePurchaseItem(userId, itemToPurchase, parseStringToDate(dateNow), serverInventory, isForeignCustomer);
+                    message = String.format(EXCHANGE_ITEM_SUCCESS, itemIdToReturn, itemToPurchase.getItemId());
                 }
             }
         }
         return message;
     }
 
-    private static void updateInventoryForRefundedItem(ServerInventory serverInventory, String itemId, PurchaseLog purchase) {
+    private static void updateInventoryForRefundedItem(ServerInventory serverInventory, String itemId) {
         Map<String, Item> itemCatalog = serverInventory.getInventoryCatalog();
         Item item = itemCatalog.get(itemId);
-        if (item == null) {
-            // Block other possible concurrent requests for adding or refunding the same item that doesn't exists
-            synchronized (itemCatalog) {
-                Item oldItem =
-                        itemCatalog.putIfAbsent(purchase.getItemId(), new Item(itemId, purchase.getItemName(), purchase.getPrice(), 1));
-                // Possibility of item being already inserted because of the cached item in the first get() call
-                if (oldItem != null) {
-                    updateExistingItemQuantity(oldItem, serverInventory);
-                }
-            }
-        } else {
+        if (item != null) {
             updateExistingItemQuantity(item, serverInventory);
         }
     }
