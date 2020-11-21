@@ -12,9 +12,12 @@ import util.AddressUtil;
 import util.MessageUtil;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -32,9 +35,11 @@ public abstract class Replica {
     protected final JChannel replicaClientChannel;
 
     protected final Map<String, StoreStrategy> storeMap;
+    protected final AtomicBoolean isRunning;
+    protected final Logger logger;
+    protected final List<DatagramSocket> udpServers;
 
     private final String name;
-    private final Logger logger;
 
     public Replica(String name) throws Exception {
         this.name = name;
@@ -44,15 +49,21 @@ public abstract class Replica {
         replicaClientChannel = new JChannel().name(name);
         storeMap = new HashMap<>();
         logger = Logger.getLogger(name);
+        isRunning = new AtomicBoolean();
+        udpServers = new LinkedList<>();
     }
 
     public Replica start() throws Exception {
+        isRunning.set(true);
+
         initLogger();
         initReplicaStores();
+
         sequencerChannel.connect(SEQUENCER_REPLICA_CLUSTER);
         rmReplicaChannel.connect(REPLICA_RM_CLUSTER);
         replicaClientChannel.connect(CLIENT_REPLICA_CLUSTER);
         logger.info(String.format(LOG_REPLICA_START, name));
+
         return this;
     }
 
@@ -60,6 +71,10 @@ public abstract class Replica {
         sequencerChannel.disconnect();
         rmReplicaChannel.disconnect();
         replicaClientChannel.disconnect();
+        isRunning.set(false);
+        for (DatagramSocket udpServer : udpServers) {
+            udpServer.close();
+        }
         logger.info(String.format(LOG_REPLICA_KILL, name));
     }
 
@@ -133,7 +148,8 @@ public abstract class Replica {
 
     private void sendResponseToClient(OperationRequest operationRequest, String operationResponse) {
         Address clientAddress = AddressUtil.findAddressForGivenName(replicaClientChannel, operationRequest.getCorbaClient());
-        UDPResponseMessage response = new UDPResponseMessage(name, STRING_RESPONSE_TYPE, operationResponse, operationRequest.getChecksum(), operationRequest.getSequenceNumber());
+        UDPResponseMessage response = new UDPResponseMessage(name, STRING_RESPONSE_TYPE, operationResponse, operationRequest.getChecksum(),
+                                                             operationRequest.getSequenceNumber());
         try {
             replicaClientChannel.send(createMessageFor(clientAddress, response));
         } catch (Exception e) {
