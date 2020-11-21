@@ -102,15 +102,19 @@ public class Store implements StoreStrategy {
 
     public String listItemAvailability(String managerID) {
         StringBuilder sb = new StringBuilder();
-
+        sb.append("{");
         for (Map.Entry<String, String> entry : this.inventory.entrySet()) {
             String[] itemInfo = entry.getValue().split(",");
             String name = itemInfo[0];
             int quantity = Integer.parseInt(itemInfo[1]);
             int price = Integer.parseInt(itemInfo[2]);
-            sb.append(String.format(LIST_ITEM_AVAILABILITY_SINGLE_SUCCESS, entry.getKey(), name, quantity, price));
+            sb.append(String.format(LIST_ITEM_AVAILABILITY_SINGLE_SUCCESS, name, entry.getKey(), quantity, price));
             sb.append(",");
+
         }
+        if (sb.charAt(sb.length() - 1) == ',')
+            sb.deleteCharAt(sb.length() - 1);
+        sb.append("}");
         return sb.toString();
     }
 
