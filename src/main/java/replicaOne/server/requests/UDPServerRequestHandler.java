@@ -143,7 +143,7 @@ public class UDPServerRequestHandler {
         Date dateOfReturn = parseStringToDate(date);
         Pair<Integer, String> result =
                 isEligibleForExchange(userId, serverName.equals(getServerFromId(itemId)), serverInventory, itemId, dateOfReturn);
-        return result.getKey() + "," + result.getValue();
+        return result.getKey() + ";" + result.getValue();
     }
 
     private String exchangeItem(List<String> params) {
@@ -152,9 +152,9 @@ public class UDPServerRequestHandler {
         int budget = Integer.parseInt(params.get(1));
         String itemIdToReturn = params.get(2);
         String itemIdToBuy = params.get(3);
-        Date dateNow = parseStringToDate(params.get(4));
+        String dateNow = params.get(4);
 
         Item itemToPurchase = serverInventory.getInventoryCatalog().get(itemIdToBuy);
-        return UserItemTransactionUtil.exchangeItem(userId, budget, itemIdToReturn, itemToPurchase, dateNow, serverInventory);
+        return UserItemTransactionUtil.exchangeItem(userId, budget, itemIdToReturn, itemIdToBuy, itemToPurchase, dateNow, serverInventory);
     }
 }

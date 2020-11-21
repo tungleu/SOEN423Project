@@ -18,7 +18,7 @@ public final class TimeUtil {
 
     public static Date parseStringToDate(String date) {
         int day = Integer.parseInt(date.substring(0, 2));
-        int month = Integer.parseInt(date.substring(2, 4));
+        int month = Integer.parseInt(date.substring(2, 4)) - 1;
         int year = Integer.parseInt(date.substring(4));
 
         Calendar calendar = Calendar.getInstance();
@@ -28,12 +28,17 @@ public final class TimeUtil {
     }
 
     public static String parseDateToString(Date date) {
-        return date.getYear() + "," + date.getMonth() + "," + date.getDay();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        String monthString = (month > 9) ? Integer.toString(month) : "0" + month;
+        String dayString = (day > 9) ? Integer.toString(day) : "0" + day;
+        return dayString + monthString + calendar.get(Calendar.YEAR);
     }
 
     public static Date getDateNow() {
-        Calendar calendar = Calendar.getInstance();
-        return new Date(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        return Calendar.getInstance().getTime();
     }
 
 }

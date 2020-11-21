@@ -156,8 +156,12 @@ public class Store implements StoreStrategy {
         List<String> results = new LinkedList<>();
 
         // Current store
-        inventoryCatalog.values().forEach(
-                (item) -> results.add(String.format(FIND_ITEM_SINGLE_SUCCESS, item.getItemId(), item.getItemQuantity(), item.getPrice())));
+        inventoryCatalog.values().forEach((item) -> {
+            if (item.getItemName().equals(itemName)) {
+                results.add(String.format(FIND_ITEM_SINGLE_SUCCESS, item.getItemId(), item.getItemQuantity(), item.getPrice()));
+            }
+        });
+
         // UDP req to other stores for items
         for (int port : PORTS) {
             if (serverPort != port) {
@@ -238,12 +242,11 @@ public class Store implements StoreStrategy {
             return e.getMessage();
         }
 
-        Date parsedReturnDate = parseStringToDate(dateOfReturn);
-        Pair<Integer, String> exchangeResp = checkEligibleForExchange(customerID, oldItemID, parsedReturnDate);
+        Pair<Integer, String> exchangeResp = checkEligibleForExchange(customerID, oldItemID, dateOfReturn);
 
         int budget = exchangeResp.getKey();
         if (budget > 0) {
-            return exchangeItem(customerID, oldItemID, newItemID, budget, parsedReturnDate);
+            return exchangeItem(customerID, oldItemID, newItemID, budget, dateOfReturn);
         }
         return exchangeResp.getValue();
     }
@@ -276,27 +279,25 @@ public class Store implements StoreStrategy {
         }
     }
 
-    private Pair<Integer, String> checkEligibleForExchange(String userId, String itemId, Date dateOfReturn) {
+    private Pair<Integer, String> checkEligibleForExchange(String userId, String itemId, String dateOfReturn) {
         String server = getServerFromId(itemId);
         if (server.equals(serverName)) {
-            return isEligibleForExchange(userId, false /* = isForeignCustomer */, serverInventory, itemId, dateOfReturn);
+            return isEligibleForExchange(userId, false /* = isForeignCustomer */, serverInventory, itemId, parseStringToDate(dateOfReturn));
         } else {
-            String response =
-                    requestFromStore(RETURN_ITEM_ELIGIBLE_REQ, getPortForServer(server), userId, itemId, parseDateToString(dateOfReturn))
-                            .trim();
-            String[] values = response.split(",");
+            String response = requestFromStore(RETURN_ITEM_ELIGIBLE_REQ, getPortForServer(server), userId, itemId, dateOfReturn).trim();
+            String[] values = response.split(";");
             return new Pair<>(Integer.parseInt(values[0]), values[1]);
         }
     }
 
-    private String exchangeItem(String userId, String oldItemId, String newItemId, int budget, Date dateNow) {
+    private String exchangeItem(String userId, String oldItemId, String newItemId, int budget, String dateNow) {
         String newItemServer = getServerFromId(newItemId);
         if (newItemServer.equals(serverName)) {
             Item item = inventoryCatalog.get(newItemId);
-            return UserItemTransactionUtil.exchangeItem(userId, budget, oldItemId, item, dateNow, serverInventory);
+            return UserItemTransactionUtil.exchangeItem(userId, budget, oldItemId, newItemId, item, dateNow, serverInventory);
         } else {
-            return requestFromStore(EXCHANGE_ITEM_REQ, getPortForServer(newItemServer), userId, Double.toString(budget), oldItemId,
-                                    newItemId, parseDateToString(dateNow)).trim();
+            return requestFromStore(EXCHANGE_ITEM_REQ, getPortForServer(newItemServer), userId, Integer.toString(budget), oldItemId,
+                                    newItemId, dateNow).trim();
         }
     }
 
