@@ -8,6 +8,7 @@ import replicaOne.server.util.TimeUtil;
 import replicaOne.server.util.user.UserBudgetUtil;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static common.OperationResponse.*;
 import static replicaOne.server.util.IdUtil.getServerFromId;
@@ -52,11 +53,10 @@ public final class InventoryUtil {
         return message;
     }
 
-    public static Pair<Integer, String> isEligibleForExchange(String userID, boolean isForeignCustomer,
-                              ServerInventory serverInventory,
-                              String itemId,
-                              Date dateOfReturn) {
-        List<PurchaseLog> purchaseLog = serverInventory.getUserPurchaseLogs().get(userID).get(itemId);
+    public static Pair<Integer, String> isEligibleForExchange(String userID, boolean isForeignCustomer, ServerInventory serverInventory,
+                                                              String itemId, Date dateOfReturn) {
+        List<PurchaseLog> purchaseLog =
+                serverInventory.getUserPurchaseLogs().computeIfAbsent(userID, k -> new ConcurrentHashMap<>()).get(itemId);
         if (purchaseLog != null) {
             int logIndex = findPossibleValidReturnDate(purchaseLog, dateOfReturn);
             if (logIndex < purchaseLog.size()) {
