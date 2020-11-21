@@ -133,7 +133,7 @@ public abstract class Replica {
 
     private void sendResponseToClient(OperationRequest operationRequest, String operationResponse) {
         Address clientAddress = AddressUtil.findAddressForGivenName(replicaClientChannel, operationRequest.getCorbaClient());
-        UDPResponseMessage response = new UDPResponseMessage(name, STRING_RESPONSE_TYPE, operationResponse, operationRequest.getChecksum());
+        UDPResponseMessage response = new UDPResponseMessage(name, STRING_RESPONSE_TYPE, operationResponse, operationRequest.getChecksum(), operationRequest.getSequenceNumber());
         try {
             replicaClientChannel.send(createMessageFor(clientAddress, response));
         } catch (Exception e) {
