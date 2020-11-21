@@ -15,24 +15,22 @@ public final class UserBudgetUtil {
     private UserBudgetUtil() {
     }
 
-    public static void updateUserBudget(String customerID, ServerInventory serverInventory, boolean isForeignCustomer,
-                                        int price) {
+    public static void updateUserBudget(String customerID, ServerInventory serverInventory, boolean isForeignCustomer, int price) {
         if (isForeignCustomer) {
             int budget = retrieveUserBudget(customerID, serverInventory, true) - price;
             UDPClientRequestUtil.requestFromStore(RequestType.UPDATE_BUDGET_REQ,
-                            getPortForServer(getServerFromId(customerID)), customerID,
-                            Integer.toString(budget));
+                                                  getPortForServer(serverInventory.getPorts(), getServerFromId(customerID)), customerID,
+                                                  Integer.toString(budget));
         } else {
             serverInventory.getUserBudgets().put(customerID, serverInventory.getUserBudgets().get(customerID) - price);
         }
     }
 
-    public static int retrieveUserBudget(String customerID, ServerInventory serverInventory,
-                                            boolean isForeignCustomer) {
+    public static int retrieveUserBudget(String customerID, ServerInventory serverInventory, boolean isForeignCustomer) {
         if (isForeignCustomer) {
             String budgetResponse = UDPClientRequestUtil
-                    .requestFromStore(RequestType.GET_BUDGET_REQ, getPortForServer(getServerFromId(customerID)),
-                            customerID);
+                    .requestFromStore(RequestType.GET_BUDGET_REQ, getPortForServer(serverInventory.getPorts(), getServerFromId(customerID)),
+                                      customerID);
             return Integer.parseInt(budgetResponse);
         } else {
             return serverInventory.getUserBudgets().get(customerID);

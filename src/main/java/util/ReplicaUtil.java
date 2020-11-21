@@ -1,6 +1,5 @@
 package util;
 
-import common.ReplicaConstants;
 import org.jgroups.Message;
 import replica.ReplicaOne;
 import replica.ReplicaThree;
@@ -10,7 +9,6 @@ import replica.data.ReplicaOneData;
 import replica.data.ReplicaThreeData;
 import replica.data.ReplicaTwoData;
 import replicaOne.model.ServerInventory;
-import replicamanager.ReplicaManager;
 
 import javax.annotation.Nullable;
 
@@ -22,7 +20,7 @@ public final class ReplicaUtil {
     }
 
     public static String chooseReplica(String name) {
-        for (String replica : REPLICA_MANAGER_NAMES) {
+        for (String replica : REPLICA_NAMES) {
             if (!name.equals(replica)) return replica;
         }
         // Should never happen
@@ -30,7 +28,6 @@ public final class ReplicaUtil {
     }
 
     public static Replica startReplica(String replicaManager, String replica, @Nullable Message message) throws Exception {
-        // TODO(#14): Add other code bases for replica and their corresponding data fetch
         String name = replicaManager + REPLICA_NAME_DELIMETER + replica;
         switch (replica) {
             case REPLICA_TWO:
@@ -38,7 +35,7 @@ public final class ReplicaUtil {
             case REPLICA_THREE:
                 return new ReplicaThree(name, fetchReplicaThreeData(message)).start();
             default:
-                return new ReplicaOne(name, fetchReplicaOneData(message)).start();
+                return new ReplicaOne(name, fetchReplicaOneData(message), message == null).start();
         }
     }
 
@@ -66,7 +63,7 @@ public final class ReplicaUtil {
         }
     }
 
-    public static String fetchRMNamefromReplica(String replicaName){
+    public static String fetchRMNamefromReplica(String replicaName) {
         return replicaName.split(REPLICA_NAME_DELIMETER)[0];
     }
 

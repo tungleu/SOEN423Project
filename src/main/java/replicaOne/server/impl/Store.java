@@ -28,13 +28,15 @@ public class Store implements StoreStrategy {
     private final Map<String, Item> inventoryCatalog;
     private final Map<String, Queue<String>> itemWaitList;
     private final ServerInventory serverInventory;
+    private final int[] ports;
 
-    public Store(String serverName, int port, ServerInventory serverInventory) {
+    public Store(String serverName, int portIndex, ServerInventory serverInventory) {
         this.inventoryCatalog = serverInventory.getInventoryCatalog();
         this.itemWaitList = serverInventory.getItemWaitList();
         this.serverInventory = serverInventory;
         this.serverName = serverName;
-        this.serverPort = port;
+        this.ports = serverInventory.getPorts();
+        this.serverPort = ports[portIndex];
     }
 
     /* Manager Requests */
@@ -140,7 +142,7 @@ public class Store implements StoreStrategy {
             response = maybePurchaseItem(userID, item, parsedDate, serverInventory, false /* = isForeignCustomer */);
         } else {
             // UDP to other server
-            response = requestFromStore(PURCHASE_ITEM_REQ, getPortForServer(server), userID, itemId, dateOfPurchase).trim();
+            response = requestFromStore(PURCHASE_ITEM_REQ, getPortForServer(ports, server), userID, itemId, dateOfPurchase).trim();
         }
         return response;
     }
@@ -163,7 +165,7 @@ public class Store implements StoreStrategy {
         });
 
         // UDP req to other stores for items
-        for (int port : PORTS) {
+        for (int port : ports) {
             if (serverPort != port) {
                 String responseString = requestFromStore(FIND_ITEM_REQ, port, itemName);
                 String response = responseString.trim();
@@ -198,7 +200,7 @@ public class Store implements StoreStrategy {
         if (server.equals(serverName)) {
             return maybeReturnItem(userID, serverInventory, false /* = isForeignCustomer */, itemId, parseStringToDate(dateOfReturn));
         } else {
-            return requestFromStore(RETURN_ITEM_REQ, getPortForServer(server), userID, itemId, dateOfReturn).trim();
+            return requestFromStore(RETURN_ITEM_REQ, getPortForServer(ports, server), userID, itemId, dateOfReturn).trim();
         }
     }
 
@@ -257,7 +259,7 @@ public class Store implements StoreStrategy {
         if (serverName.equals(server)) {
             return waitListUser(userID, itemID, serverInventory, false /* = isForeignCustomer */);
         } else {
-            return requestFromStore(WAIT_LIST_REQ, getPortForServer(server), userID, itemID);
+            return requestFromStore(WAIT_LIST_REQ, getPortForServer(ports, server), userID, itemID);
         }
     }
 
@@ -284,7 +286,7 @@ public class Store implements StoreStrategy {
         if (server.equals(serverName)) {
             return isEligibleForExchange(userId, false /* = isForeignCustomer */, serverInventory, itemId, parseStringToDate(dateOfReturn));
         } else {
-            String response = requestFromStore(RETURN_ITEM_ELIGIBLE_REQ, getPortForServer(server), userId, itemId, dateOfReturn).trim();
+            String response = requestFromStore(RETURN_ITEM_ELIGIBLE_REQ, getPortForServer(ports, server), userId, itemId, dateOfReturn).trim();
             String[] values = response.split(";");
             return new Pair<>(Integer.parseInt(values[0]), values[1]);
         }
@@ -294,9 +296,9 @@ public class Store implements StoreStrategy {
         String newItemServer = getServerFromId(newItemId);
         if (newItemServer.equals(serverName)) {
             Item item = inventoryCatalog.get(newItemId);
-            return UserItemTransactionUtil.exchangeItem(userId, budget, oldItemId, newItemId, item, dateNow, serverInventory);
+            return UserItemTransactionUtil.exchangeItem(ports, userId, budget, oldItemId, newItemId, item, dateNow, serverInventory);
         } else {
-            return requestFromStore(EXCHANGE_ITEM_REQ, getPortForServer(newItemServer), userId, Integer.toString(budget), oldItemId,
+            return requestFromStore(EXCHANGE_ITEM_REQ, getPortForServer(ports, newItemServer), userId, Integer.toString(budget), oldItemId,
                                     newItemId, dateNow).trim();
         }
     }

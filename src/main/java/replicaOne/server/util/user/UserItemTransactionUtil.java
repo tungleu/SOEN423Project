@@ -88,7 +88,7 @@ public final class UserItemTransactionUtil {
         return message;
     }
 
-    public static String exchangeItem(String userId, int budget, String itemIdToReturn, String itemToBuy, Item itemToPurchase,
+    public static String exchangeItem(int[] ports, String userId, int budget, String itemIdToReturn, String itemToBuy, Item itemToPurchase,
                                       String dateNow, ServerInventory serverInventory) {
         boolean isForeignCustomer = !getServerFromId(userId).equals(serverInventory.getServerName());
         boolean isItemToReturnLocal = getServerFromId(itemIdToReturn).equals(serverInventory.getServerName());
@@ -123,7 +123,7 @@ public final class UserItemTransactionUtil {
                 } else {
                     String server = getServerFromId(itemIdToReturn);
                     returnItemResponse =
-                            requestFromStore(RETURN_ITEM_REQ, getPortForServer(server), userId, itemIdToReturn, dateNow).trim();
+                            requestFromStore(RETURN_ITEM_REQ, getPortForServer(ports, server), userId, itemIdToReturn, dateNow).trim();
                 }
 
                 message = returnItemResponse;
