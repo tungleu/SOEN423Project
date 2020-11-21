@@ -92,7 +92,7 @@ public class Store implements StoreStrategy {
             } else {
                 info[1] = Integer.toString(Integer.parseInt(info[1]) - quantity);
                 inventory.replace(itemID, String.join(",", info));
-                return String.format(REMOVE_ITEM_SUCCESS, itemID, info[0]);
+                return String.format(REMOVE_ITEM_SUCCESS, info[0], itemID);
             }
         } else {
             System.out.println("The given item ID doesn't exist");
