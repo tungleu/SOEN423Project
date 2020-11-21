@@ -73,34 +73,38 @@ public abstract class Replica {
         StoreStrategy store = storeMap.get(MessageUtil.fetchTargetStore(operationRequest));
 
         String response;
-        switch (operationRequest.getRequestType()) {
-            case ADD_ITEM:
-                response = store.addItem(params.get(0), params.get(1), params.get(2), Integer.parseInt(params.get(3)),
-                                         Integer.parseInt(params.get(4)));
-                break;
-            case REMOVE_ITEM:
-                response = store.removeItem(params.get(0), params.get(1), Integer.parseInt(params.get(2)));
-                break;
-            case LIST_ITEM_AVAILABILITY:
-                response = store.listItemAvailability(params.get(0));
-                break;
-            case PURCHASE_ITEM:
-                response = store.purchaseItem(params.get(0), params.get(1), params.get(2));
-                break;
-            case FIND_ITEM:
-                response = store.findItem(params.get(0), params.get(1));
-                break;
-            case RETURN_ITEM:
-                response = store.returnItem(params.get(0), params.get(1), params.get(2));
-                break;
-            case EXCHANGE_ITEM:
-                response = store.exchangeItem(params.get(0), params.get(1), params.get(2), params.get(3));
-                break;
-            case ADD_WAIT_LIST:
-                response = store.addWaitList(params.get(0), params.get(1));
-                break;
-            default:
-                response = "Unknown operation request";
+        try {
+            switch (operationRequest.getRequestType()) {
+                case ADD_ITEM:
+                    response = store.addItem(params.get(0), params.get(1), params.get(2), Integer.parseInt(params.get(3)),
+                                             Integer.parseInt(params.get(4)));
+                    break;
+                case REMOVE_ITEM:
+                    response = store.removeItem(params.get(0), params.get(1), Integer.parseInt(params.get(2)));
+                    break;
+                case LIST_ITEM_AVAILABILITY:
+                    response = store.listItemAvailability(params.get(0));
+                    break;
+                case PURCHASE_ITEM:
+                    response = store.purchaseItem(params.get(0), params.get(1), params.get(2));
+                    break;
+                case FIND_ITEM:
+                    response = store.findItem(params.get(0), params.get(1));
+                    break;
+                case RETURN_ITEM:
+                    response = store.returnItem(params.get(0), params.get(1), params.get(2));
+                    break;
+                case EXCHANGE_ITEM:
+                    response = store.exchangeItem(params.get(0), params.get(1), params.get(2), params.get(3));
+                    break;
+                case ADD_WAIT_LIST:
+                    response = store.addWaitList(params.get(0), params.get(1));
+                    break;
+                default:
+                    response = "Unknown operation request";
+            }
+        } catch (Exception e) {
+            response = e.getMessage();
         }
 
         logger.info(String.format(LOG_REPLICA_REQUEST_RESULT, name, operationRequest.getSequenceNumber(), response));
@@ -139,7 +143,7 @@ public abstract class Replica {
 
     private void initLogger() throws IOException {
         String logFile = System.getProperty("user.dir") + "/src/main/java/replica/common/" + name + ".log";
-        Handler fileHandler =  new FileHandler(logFile, true);
+        Handler fileHandler = new FileHandler(logFile, true);
         this.logger.addHandler(fileHandler);
     }
 }
