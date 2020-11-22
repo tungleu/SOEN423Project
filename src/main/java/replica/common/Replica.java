@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 
 import static common.OperationResponse.STRING_RESPONSE_TYPE;
 import static common.ReplicaConstants.*;
+import static model.RequestType.KILL;
 import static util.MessageUtil.createMessageFor;
 import static util.MessageUtil.messageToUDPRequest;
 
@@ -142,7 +143,11 @@ public abstract class Replica {
     private Receiver sequenceHandler() {
         return msg -> {
             OperationRequest operationRequest = (OperationRequest) messageToUDPRequest(msg);
-            redirectRequestToStore(operationRequest);
+            if (operationRequest.getRequestType() == KILL) {
+                kill();
+            } else {
+                redirectRequestToStore(operationRequest);
+            }
         };
     }
 
