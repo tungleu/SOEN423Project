@@ -49,8 +49,7 @@ public abstract class Replica {
         this.name = name;
         sequencerChannel = new JChannel().setReceiver(sequenceHandler()).name(name);
         rmReplicaChannel = new JChannel().setReceiver(rmHandler()).name(name);
-        // We don't need a handle because it should only be a one-way communication
-        replicaClientChannel = new JChannel().name(name);
+        replicaClientChannel = new JChannel().setReceiver(clientHandler()).name(name);
         storeMap = new HashMap<>();
         logger = Logger.getLogger(name);
         isRunning = new AtomicBoolean();
@@ -154,13 +153,17 @@ public abstract class Replica {
     private Receiver sequenceHandler() {
         return msg -> {
             OperationRequest operationRequest = (OperationRequest) messageToUDPRequest(msg);
-            RequestType type = operationRequest.getRequestType();
+            redirectRequestToStore(operationRequest);
+        };
+    }
+
+    private Receiver clientHandler() {
+        return msg -> {
+            RequestType type = messageToUDPRequest(msg).getRequestType();
             if (type == KILL) {
                 kill();
             } else if (type == SABOTAGE) {
                 sabotage();
-            } else {
-                redirectRequestToStore(operationRequest);
             }
         };
     }
