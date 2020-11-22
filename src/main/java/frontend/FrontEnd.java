@@ -3,7 +3,9 @@ package frontend;
 import CORBA_FE.FrontEndPOA;
 
 import static common.ReplicaConstants.*;
+import static util.AddressUtil.fetchAddressForDataTransfer;
 
+import common.ReplicaConstants;
 import model.OperationRequest;
 import model.RequestType;
 import model.UDPRequestMessage;
@@ -95,7 +97,25 @@ public class FrontEnd extends FrontEndPOA {
 
     @Override
     public String killReplica(int replica) {
-        return null;
+        String replicaName;
+        switch (replica){
+            case 1:
+                replicaName = REPLICA_ONE;
+                break;
+            case 2:
+                replicaName = REPLICA_TWO;
+                break;
+            default:
+                replicaName = REPLICA_THREE;
+        }
+        OperationRequest operationRequest = new OperationRequest(RequestType.KILL, Collections.emptyList(), "", CORBA_CLIENT_NAME);
+        try {
+            Address replicaAddress = AddressUtil.findReplicaAddress(clientReplicaChannel, replicaName);
+            clientReplicaChannel.send(MessageUtil.createMessageFor(replicaAddress, operationRequest));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "Killed " + replicaName;
     }
 
 

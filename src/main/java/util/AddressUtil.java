@@ -12,6 +12,13 @@ public final class AddressUtil {
         return jChannel.view().getMembers().stream().filter(address -> name.equals(address.toString())).findFirst().get();
     }
 
+    public static Address findReplicaAddress(JChannel jChannel, String replicaName){
+        return jChannel.view().getMembers().stream().filter(address -> {
+            String name = address.toString();
+            return name.contains(replicaName);
+        }).findFirst().get();
+    }
+
     public static Address fetchAddressForDataTransfer(String rmName, String replicaName, JChannel channel) {
         return channel.view().getMembers().stream().filter(address -> {
             String name = address.toString();
