@@ -24,8 +24,8 @@ public class ServerData implements Serializable {
         this.customerClients = new HashMap<String, customerClient>();
         this.portMap = new HashMap<String, Integer>();
         this.purchaseLog = new ArrayList<String>();
-        this.portMap.put("QC", 1111);
-        this.portMap.put("ON", 2222);
+        this.portMap.put("QC", 3331);
+        this.portMap.put("ON", 3332);
         this.portMap.put("BC", 3333);
     }
 
@@ -51,5 +51,13 @@ public class ServerData implements Serializable {
 
     public ArrayList<String> getPurchaseLog() {
         return purchaseLog;
+    }
+
+    public void resetPorts(){
+        for (Map.Entry<String, Integer> entry : this.portMap.entrySet()){
+            int newPort = entry.getValue() + this.portMap.values().size();
+            this.portMap.replace(entry.getKey(), newPort);
+        }
+
     }
 }

@@ -33,7 +33,7 @@ public final class ReplicaUtil {
             case REPLICA_TWO:
                 return new ReplicaTwo(name, fetchReplicaTwoData(message)).start();
             case REPLICA_THREE:
-                return new ReplicaThree(name, fetchReplicaThreeData(message)).start();
+                return new ReplicaThree(name, fetchReplicaThreeData(message), message == null).start();
             default:
                 return new ReplicaOne(name, fetchReplicaOneData(message), message == null).start();
         }

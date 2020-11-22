@@ -15,15 +15,19 @@ import static common.ReplicaConstants.*;
 public class ReplicaThree extends Replica {
 
     private final ReplicaThreeData replicaThreeData;
+    private boolean isFreshStart;
 
-    public ReplicaThree(String name, ReplicaThreeData replicaThreeData) throws Exception {
+    public ReplicaThree(String name, ReplicaThreeData replicaThreeData, boolean isFreshStart) throws Exception {
         super(name);
         this.replicaThreeData = replicaThreeData;
+        this.isFreshStart = isFreshStart;
     }
 
     @Override
     protected void initReplicaStores() throws IOException {
-
+        if (!this.isFreshStart) {
+            replicaThreeData.resetPorts();
+        }
         Store BCstore = new Store(replicaThreeData.getBCData());
         Store ONstore = new Store(replicaThreeData.getONData());
         Store QCstore = new Store(replicaThreeData.getQCData());
@@ -32,18 +36,9 @@ public class ReplicaThree extends Replica {
         this.storeMap.put(ON_SERVER_NAME, ONstore);
         this.storeMap.put(QC_SERVER_NAME, QCstore);
 
-        Runnable task1 = BCstore::receive;
-        Runnable task2 = ONstore::receive;
-        Runnable task3 = QCstore::receive;
-
-        Thread thread1 = new Thread(task1);
-        Thread thread2 = new Thread(task2);
-        Thread thread3 = new Thread(task3);
-
-        thread1.start();
-        thread2.start();
-        thread3.start();
-
+        this.udpServers.add(BCstore.startUDPServer(isRunning));
+        this.udpServers.add(ONstore.startUDPServer(isRunning));
+        this.udpServers.add(QCstore.startUDPServer(isRunning));
     }
 
     @Override
