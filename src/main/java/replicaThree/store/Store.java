@@ -383,74 +383,77 @@ public class Store implements StoreStrategy {
         return replyMessage;
     }
 
-    public void startUDPServer(AtomicBoolean isRunning) {
-        new Thread(() ->{
-        try (DatagramSocket aSocket = new DatagramSocket(this.portMap.get(this.province.toString()))) {
-            byte[] buffer = new byte[1000];
+    public DatagramSocket startUDPServer(AtomicBoolean isRunning) {
+        try {
+            DatagramSocket aSocket = new DatagramSocket(this.portMap.get(this.province.toString()));
             System.out.println("UDP Server for " + this.province.toString() + " has started listening............");
-            String replyMessage = null;
-            while (isRunning.get()) {
-                DatagramPacket request = new DatagramPacket(buffer, buffer.length);
-                aSocket.receive(request);
-                String[] requestArgs = new String(request.getData()).split(",");
-                switch (requestArgs[0]) {
-                    case "PURCHASE": {
-                        String customerID = requestArgs[1];
-                        int budget = Integer.parseInt(requestArgs[2]);
-                        String itemID = requestArgs[3];
-                        String date = requestArgs[4];
-                        replyMessage = this.purchaseFromOutside(customerID, budget, itemID, date);
-                        break;
-                    }
-                    case "WAITLIST": {
-                        String customerID = requestArgs[1];
-                        String itemID = requestArgs[2];
-                        this.addLocalWaitList(customerID, itemID);
-                        break;
-                    }
-                    case "ITEM_INFO":
-                        String itemName = requestArgs[1];
-                        replyMessage = this.findLocalItem(itemName);
-                        break;
-                    case "ITEM_INFO_2":
-                        replyMessage = this.inventory.get(requestArgs[1].trim());
-                        break;
-                    case "RETURN": {
-                        String itemID = requestArgs[1];
-                        String customerID = requestArgs[2];
-                        String dateOfReturn = requestArgs[3];
-                        replyMessage = this.returnItemfromOutside(customerID, itemID, dateOfReturn);
-                        break;
-                    }
-                    case "PURCHASE_2": {
-                        String customerID = requestArgs[1];
-                        String itemID = requestArgs[2];
-                        String date = requestArgs[3];
-                        replyMessage = this.purchaseItem(customerID, itemID, date);
-                        break;
-                    }
-                    case "RETURN_ELIGIBLE": {
-                        String customerID = requestArgs[1];
-                        String itemID = requestArgs[2];
-                        String date = requestArgs[3];
-                        replyMessage = String.valueOf(this.checkReturnElgible(customerID, itemID, date));
-                        break;
+            new Thread(() -> {
+                String replyMessage = null;
+                byte[] buffer = new byte[1000];
+                while (isRunning.get()) {
+                    DatagramPacket request = new DatagramPacket(buffer, buffer.length);
+                    try {
+                        aSocket.receive(request);
+                        String[] requestArgs = new String(request.getData()).split(",");
+                        switch (requestArgs[0]) {
+                            case "PURCHASE": {
+                                String customerID = requestArgs[1];
+                                int budget = Integer.parseInt(requestArgs[2]);
+                                String itemID = requestArgs[3];
+                                String date = requestArgs[4];
+                                replyMessage = this.purchaseFromOutside(customerID, budget, itemID, date);
+                                break;
+                            }
+                            case "WAITLIST": {
+                                String customerID = requestArgs[1];
+                                String itemID = requestArgs[2];
+                                this.addLocalWaitList(customerID, itemID);
+                                break;
+                            }
+                            case "ITEM_INFO":
+                                String itemName = requestArgs[1];
+                                replyMessage = this.findLocalItem(itemName);
+                                break;
+                            case "ITEM_INFO_2":
+                                replyMessage = this.inventory.get(requestArgs[1].trim());
+                                break;
+                            case "RETURN": {
+                                String itemID = requestArgs[1];
+                                String customerID = requestArgs[2];
+                                String dateOfReturn = requestArgs[3];
+                                replyMessage = this.returnItemfromOutside(customerID, itemID, dateOfReturn);
+                                break;
+                            }
+                            case "PURCHASE_2": {
+                                String customerID = requestArgs[1];
+                                String itemID = requestArgs[2];
+                                String date = requestArgs[3];
+                                replyMessage = this.purchaseItem(customerID, itemID, date);
+                                break;
+                            }
+                            case "RETURN_ELIGIBLE": {
+                                String customerID = requestArgs[1];
+                                String itemID = requestArgs[2];
+                                String date = requestArgs[3];
+                                replyMessage = String.valueOf(this.checkReturnElgible(customerID, itemID, date));
+                                break;
+                            }
+                        }
+                        assert replyMessage != null;
+                        DatagramPacket reply = new DatagramPacket(replyMessage.getBytes(), replyMessage.length(), request.getAddress(),
+                                request.getPort());
+                        aSocket.send(reply);
+                        buffer = new byte[1000];
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
-                assert replyMessage != null;
-                DatagramPacket reply = new DatagramPacket(replyMessage.getBytes(), replyMessage.length(), request.getAddress(),
-                        request.getPort());
-                aSocket.send(reply);
-                buffer = new byte[1000];
-            }
-
+            }).start();
+            return aSocket;
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());
-        } catch (IOException e) {
-            System.out.println("IO: " + e.getMessage());
         }
-        }).start();
-
+        return null;
     }
 
     public customerClient getCustomer(String customerID) {

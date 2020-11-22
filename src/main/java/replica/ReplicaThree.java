@@ -16,6 +16,7 @@ public class ReplicaThree extends Replica {
 
     private final ReplicaThreeData replicaThreeData;
     private boolean isFreshStart;
+
     public ReplicaThree(String name, ReplicaThreeData replicaThreeData, boolean isFreshStart) throws Exception {
         super(name);
         this.replicaThreeData = replicaThreeData;
@@ -24,7 +25,7 @@ public class ReplicaThree extends Replica {
 
     @Override
     protected void initReplicaStores() throws IOException {
-        if(!this.isFreshStart){
+        if (!this.isFreshStart) {
             replicaThreeData.resetPorts();
         }
         Store BCstore = new Store(replicaThreeData.getBCData());
@@ -35,10 +36,9 @@ public class ReplicaThree extends Replica {
         this.storeMap.put(ON_SERVER_NAME, ONstore);
         this.storeMap.put(QC_SERVER_NAME, QCstore);
 
-        BCstore.startUDPServer(isRunning);
-        ONstore.startUDPServer(isRunning);
-        QCstore.startUDPServer(isRunning);
-
+        this.udpServers.add(BCstore.startUDPServer(isRunning));
+        this.udpServers.add(ONstore.startUDPServer(isRunning));
+        this.udpServers.add(QCstore.startUDPServer(isRunning));
     }
 
     @Override
