@@ -39,6 +39,10 @@ public class Manager {
         System.out.println(CORBAFrontEnd.listItemAvailability(this.managerID));
     }
 
+    public void killReplica(int replica) {
+        System.out.println(CORBAFrontEnd.killReplica(replica));
+    }
+
     public static void main(String[] args) throws Exception {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Please choose your province: QC, ON, BC");
@@ -52,11 +56,13 @@ public class Manager {
             String itemName;
             int price;
             int quantity;
+            int replica;
             while (true) {
                 System.out.println("Please choose your action ");
                 System.out.println("1. Add Item");
                 System.out.println("2. Remove Item ");
                 System.out.println("3. List Item ");
+                System.out.println("4. Kill Replica");
                 customerOption = scanner.nextInt();
                 switch (customerOption) {
                     case 1:
@@ -83,6 +89,13 @@ public class Manager {
                         System.out.println("LIST ITEM AVAILABILITY SELECTED");
                         manager.listItemAvailablity();
                         break;
+                    case 4:
+                        System.out.println("KILL REPLICA SELECTED");
+                        System.out.println("Choose which replica to kill (1,2,3)");
+                        replica = scanner.nextInt();
+                        manager.killReplica(replica);
+                        break;
+
                 }
             }
         } catch (Exception e) {
