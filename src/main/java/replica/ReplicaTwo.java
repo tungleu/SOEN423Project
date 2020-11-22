@@ -1,6 +1,5 @@
 package replica;
 
-import com.google.common.collect.ImmutableMap;
 import model.UDPRequestMessage;
 import org.jgroups.Address;
 import org.jgroups.Message;
@@ -10,6 +9,8 @@ import replicaTwo.store.StoreProxy;
 import util.MessageUtil;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.util.HashMap;
 import java.util.Map;
 
 import static common.ReplicaConstants.*;
@@ -26,15 +27,17 @@ public class ReplicaTwo extends Replica  {
 
     @Override
     protected void initReplicaStores() throws IOException {
-        Map<String, Integer> portsConfig = ImmutableMap.<String, Integer> builder()
-                .put(QC_SERVER_NAME, 8887)
-                .put(BC_SERVER_NAME, 8888)
-                .put(ON_SERVER_NAME, 8889)
-                .build();
+        Map<String, DatagramSocket> socketConfig = new HashMap<>();
         for(String serverName : SERVER_NAMES) {
-            StoreProxy storeProxy = new StoreProxy(serverName, this.replicaTwoData, portsConfig);
+            DatagramSocket socket = new DatagramSocket(null);
+            socket.bind(null);
+            socketConfig.put(serverName, socket);
+            udpServers.add(socket);
+        }
+        for(String serverName : SERVER_NAMES) {
+            StoreProxy storeProxy = new StoreProxy(serverName, this.replicaTwoData, socketConfig);
             this.storeMap.put(serverName, storeProxy);
-            storeProxy.initializeStore(portsConfig.get(serverName));
+            storeProxy.initializeStore(socketConfig.get(serverName));
         }
     }
 

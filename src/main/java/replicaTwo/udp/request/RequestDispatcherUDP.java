@@ -48,17 +48,17 @@ public class RequestDispatcherUDP implements RequestDispatcher {
         }
     }
 
-    private final Map<String, Integer> portsGroup;
-    public RequestDispatcherUDP(String locationName, Map<String, Integer> portsConfig) {
+    private final Map<String, DatagramSocket> socketGroup;
+    public RequestDispatcherUDP(String locationName, Map<String, DatagramSocket> portsConfig) {
         super();
-        this.portsGroup = new HashMap<>(portsConfig);
-        this.portsGroup.remove(locationName);
+        this.socketGroup = new HashMap<>(portsConfig);
+        this.socketGroup.remove(locationName);
     }
 
     @Override
     public List<String> unicast(List<String> args, String destinationName) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<List<String>> future = executor.submit(new StoreClientUDP(args, this.portsGroup.get(destinationName)));
+        Future<List<String>> future = executor.submit(new StoreClientUDP(args, this.socketGroup.get(destinationName).getLocalPort()));
         List<String> result = new ArrayList<>();
         try {
             result.addAll(future.get());
@@ -98,8 +98,8 @@ public class RequestDispatcherUDP implements RequestDispatcher {
     }
 
     private List<StoreClientUDP> prepareGroupCallables(List<String> args) {
-        return this.portsGroup.values().stream()
-                .map(port -> new StoreClientUDP(args, port))
+        return this.socketGroup.values().stream()
+                .map(socket -> new StoreClientUDP(args, socket.getLocalPort()))
                 .collect(Collectors.toList());
     }
 }

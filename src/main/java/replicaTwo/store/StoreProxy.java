@@ -3,6 +3,7 @@ package replicaTwo.store;
 import common.StoreStrategy;
 import replica.data.ReplicaTwoData;
 import replicaTwo.exception.*;
+import java.net.DatagramSocket;
 import java.util.Map;
 
 import static common.OperationResponse.*;
@@ -10,9 +11,9 @@ import static common.OperationResponse.*;
 public class StoreProxy implements StoreStrategy {
     private final Store store;
 
-    public StoreProxy(String locationName, ReplicaTwoData replicaTwoData, Map<String, Integer> portsConfig) {
+    public StoreProxy(String locationName, ReplicaTwoData replicaTwoData, Map<String, DatagramSocket> socketConfig) {
         super();
-        this.store = new Store(locationName, replicaTwoData, portsConfig);
+        this.store = new Store(locationName, replicaTwoData, socketConfig);
     }
 
     @Override
@@ -111,8 +112,8 @@ public class StoreProxy implements StoreStrategy {
         }
     }
 
-    public void initializeStore(int port) {
-        this.store.listen(port);
+    public void initializeStore(DatagramSocket socket) {
+        this.store.listen(socket);
     }
 
     private void validateItem(String managerID, String itemID) throws ManagerExternalStoreItemException {
