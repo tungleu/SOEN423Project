@@ -16,6 +16,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Store implements StoreStrategy {
 
@@ -382,12 +383,13 @@ public class Store implements StoreStrategy {
         return replyMessage;
     }
 
-    public void receive() {
+    public void startUDPServer(AtomicBoolean isRunning) {
+        new Thread(() ->{
         try (DatagramSocket aSocket = new DatagramSocket(this.portMap.get(this.province.toString()))) {
             byte[] buffer = new byte[1000];
             System.out.println("UDP Server for " + this.province.toString() + " has started listening............");
             String replyMessage = null;
-            while (true) {
+            while (isRunning.get()) {
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(request);
                 String[] requestArgs = new String(request.getData()).split(",");
@@ -441,11 +443,14 @@ public class Store implements StoreStrategy {
                 aSocket.send(reply);
                 buffer = new byte[1000];
             }
+
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());
         } catch (IOException e) {
             System.out.println("IO: " + e.getMessage());
         }
+        }).start();
+
     }
 
     public customerClient getCustomer(String customerID) {

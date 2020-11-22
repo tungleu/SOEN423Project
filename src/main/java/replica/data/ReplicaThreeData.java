@@ -2,6 +2,8 @@ package replica.data;
 
 import replicaThree.common.Province;
 import replicaThree.data.ServerData;
+
+import javax.xml.namespace.QName;
 import java.io.Serializable;
 
 public class ReplicaThreeData implements Serializable {
@@ -26,5 +28,11 @@ public class ReplicaThreeData implements Serializable {
 
     public ServerData getQCData() {
         return QCData;
+    }
+
+    public void resetPorts(){
+        BCData.resetPorts();
+        ONData.resetPorts();
+        QCData.resetPorts();
     }
 }
