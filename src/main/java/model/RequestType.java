@@ -11,5 +11,6 @@ public enum RequestType {
     ADD_WAIT_LIST,
     DATA_TRANSFER,
     FAILURE,
-    KILL
+    KILL,
+    SABOTAGE
 }

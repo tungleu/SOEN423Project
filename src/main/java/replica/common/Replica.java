@@ -2,6 +2,7 @@ package replica.common;
 
 import common.StoreStrategy;
 import model.OperationRequest;
+import model.RequestType;
 import model.UDPRequestMessage;
 import model.UDPResponseMessage;
 import org.jgroups.Address;
@@ -25,6 +26,7 @@ import java.util.logging.Logger;
 import static common.OperationResponse.STRING_RESPONSE_TYPE;
 import static common.ReplicaConstants.*;
 import static model.RequestType.KILL;
+import static model.RequestType.SABOTAGE;
 import static util.MessageUtil.createMessageFor;
 import static util.MessageUtil.messageToUDPRequest;
 
@@ -41,6 +43,7 @@ public abstract class Replica {
     protected final List<DatagramSocket> udpServers;
 
     private final String name;
+    private String sabotageString;
 
     public Replica(String name) throws Exception {
         this.name = name;
@@ -52,6 +55,7 @@ public abstract class Replica {
         logger = Logger.getLogger(name);
         isRunning = new AtomicBoolean();
         udpServers = new LinkedList<>();
+        sabotageString = "";
     }
 
     public Replica start() throws Exception {
@@ -77,6 +81,10 @@ public abstract class Replica {
             udpServer.close();
         }
         logger.info(String.format(LOG_REPLICA_KILL, name));
+    }
+
+    private void sabotage() {
+        sabotageString = "SABOTAGE";
     }
 
     protected abstract void initReplicaStores() throws IOException;
@@ -123,6 +131,9 @@ public abstract class Replica {
             response = e.getMessage();
         }
 
+        // Possible sabotage of response
+        response += sabotageString;
+
         logger.info(String.format(LOG_REPLICA_REQUEST_RESULT, name, operationRequest.getSequenceNumber(), response));
         sendResponseToClient(operationRequest, response);
     }
@@ -143,8 +154,11 @@ public abstract class Replica {
     private Receiver sequenceHandler() {
         return msg -> {
             OperationRequest operationRequest = (OperationRequest) messageToUDPRequest(msg);
-            if (operationRequest.getRequestType() == KILL) {
+            RequestType type = operationRequest.getRequestType();
+            if (type == KILL) {
                 kill();
+            } else if (type == SABOTAGE) {
+                sabotage();
             } else {
                 redirectRequestToStore(operationRequest);
             }
