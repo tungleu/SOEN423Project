@@ -24,19 +24,18 @@ import static replicaTwo.udp.request.RequestTypesUDP.*;
 
 public class Store {
     public class StoreServerUDP implements Runnable {
-        private final int port;
         private final RequestHandler requestHandler;
         private final ExecutorService executor;
-
-        public StoreServerUDP(int port) {
-            this.port = port;
+        private final DatagramSocket aSocket;
+        public StoreServerUDP(DatagramSocket socket) {
+            this.aSocket = socket;
             this.requestHandler = new RequestHandlerUDP(Store.this.inventory, Store.this.salesManager);
             this.executor = Executors.newWorkStealingPool();
         }
 
         public void run() {
-            try (DatagramSocket aSocket = new DatagramSocket(port)) {
-                System.out.println("Store started on port: " + port);
+            try {
+                System.out.println("Store started on port: " + aSocket.getLocalPort());
                 while (true) {
                     byte[] buffer = new byte[20000];
                     DatagramPacket request = new DatagramPacket(buffer, buffer.length);
@@ -113,12 +112,12 @@ public class Store {
     private final SalesManager salesManager;
     private final RequestDispatcher requestDispatcher;
 
-    public Store(String locationName, ReplicaTwoData replicaTwoData, Map<String, Integer> portsConfig) {
+    public Store(String locationName, ReplicaTwoData replicaTwoData, Map<String, DatagramSocket> socketConfig) {
         super();
         this.locationName = locationName;
         this.inventory = replicaTwoData.getInventoryOnLocation(this.locationName);
         this.salesManager = replicaTwoData.getSalesManagerOnLocation(this.locationName);
-        this.requestDispatcher = new RequestDispatcherUDP(this.locationName, portsConfig);
+        this.requestDispatcher = new RequestDispatcherUDP(this.locationName, socketConfig);
     }
 
     public String addItem(String managerID, String itemID, String itemName, int quantity, int price) throws ManagerItemPriceMismatchException {
@@ -240,8 +239,8 @@ public class Store {
         return "SUCCESS";
     }
 
-    public void listen(int port) {
-        new Thread(new StoreServerUDP(port)).start();
+    public void listen(DatagramSocket socket) {
+        new Thread(new StoreServerUDP(socket)).start();
     }
 
     private void performItemReturn(String targetStore, String customerID, String itemID, long purchaseTimestamp) {
