@@ -85,7 +85,7 @@ public class Store implements StoreStrategy {
             int current_quantity = Integer.parseInt(info[1]);
             if (quantity == -1) {
                 this.inventory.remove(itemID);
-                return String.format(REMOVE_ITEM_SUCCESS, itemID, info[0]);
+                return String.format(REMOVE_ITEM_SUCCESS, info[0], itemID);
             }
             if (current_quantity < quantity) {
                 this.inventory.remove(itemID);
@@ -287,7 +287,7 @@ public class Store implements StoreStrategy {
         int oldItemPrice = 0;
         int newItemPrice = 0;
         if (newitemID.startsWith(this.province.toString())) {
-            if(!this.inventory.containsKey(newitemID)){
+            if (!this.inventory.containsKey(newitemID)) {
                 return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, newitemID);
             }
             String[] itemInfo = this.inventory.get(newitemID).split(",");
