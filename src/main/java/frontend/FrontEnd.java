@@ -3,9 +3,8 @@ package frontend;
 import CORBA_FE.FrontEndPOA;
 
 import static common.ReplicaConstants.*;
-import static util.AddressUtil.fetchAddressForDataTransfer;
 
-import common.ReplicaConstants;
+
 import model.OperationRequest;
 import model.RequestType;
 import model.UDPRequestMessage;
@@ -97,17 +96,7 @@ public class FrontEnd extends FrontEndPOA {
 
     @Override
     public String killReplica(int replica) {
-        String replicaName;
-        switch (replica){
-            case 1:
-                replicaName = REPLICA_ONE;
-                break;
-            case 2:
-                replicaName = REPLICA_TWO;
-                break;
-            default:
-                replicaName = REPLICA_THREE;
-        }
+        String replicaName = getRepicaNamefromInt(replica);
         OperationRequest operationRequest = new OperationRequest(RequestType.KILL, Collections.emptyList(), "", CORBA_CLIENT_NAME);
         try {
             Address replicaAddress = AddressUtil.findReplicaAddress(clientReplicaChannel, replicaName);
@@ -118,6 +107,33 @@ public class FrontEnd extends FrontEndPOA {
         return "Killed " + replicaName;
     }
 
+    @Override
+    public String sabotageReplica(int replica) {
+        String replicaName = getRepicaNamefromInt(replica);
+        OperationRequest operationRequest = new OperationRequest(RequestType.SABOTAGE, Collections.emptyList(), "", CORBA_CLIENT_NAME);
+        try {
+            Address replicaAddress = AddressUtil.findReplicaAddress(clientReplicaChannel, replicaName);
+            clientReplicaChannel.send(MessageUtil.createMessageFor(replicaAddress, operationRequest));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "Sabotaged " + replicaName;
+    }
+
+    private String getRepicaNamefromInt(int replica) {
+        String replicaName;
+        switch (replica) {
+            case 1:
+                replicaName = REPLICA_ONE;
+                break;
+            case 2:
+                replicaName = REPLICA_TWO;
+                break;
+            default:
+                replicaName = REPLICA_THREE;
+        }
+        return replicaName;
+    }
 
     private String marshallRequest(RequestType requestType, List<String> params) {
         String checksum = ChecksumUtil.generateChecksumSHA256(params);
@@ -126,7 +142,8 @@ public class FrontEnd extends FrontEndPOA {
         responseMap.put(checksum, response);
         try {
             clientSequencerChannel.send(MessageUtil.createMessageFor(null, operationRequest));
-            while (System.currentTimeMillis() - response.getInitialTime() < 5000 && response.getResponses().size() != 3) {}
+            while (System.currentTimeMillis() - response.getInitialTime() < 5000 && response.getResponses().size() != 3) {
+            }
             if (!response.isEqual() || response.getResponses().size() != 3) {
                 this.handleFailure(response);
             }
