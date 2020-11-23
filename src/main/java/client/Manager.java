@@ -9,6 +9,7 @@ import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
 
 import java.util.Scanner;
+import java.util.SortedMap;
 
 public class Manager {
     private final String province;
@@ -43,6 +44,10 @@ public class Manager {
         System.out.println(CORBAFrontEnd.killReplica(replica));
     }
 
+    public void sabotageReplica(int replica) {
+        System.out.println(CORBAFrontEnd.sabotageReplica(replica));
+    }
+
     public static void main(String[] args) throws Exception {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Please choose your province: QC, ON, BC");
@@ -63,6 +68,7 @@ public class Manager {
                 System.out.println("2. Remove Item ");
                 System.out.println("3. List Item ");
                 System.out.println("4. Kill Replica");
+                System.out.println("5. Sabotage Replica");
                 customerOption = scanner.nextInt();
                 switch (customerOption) {
                     case 1:
@@ -94,6 +100,12 @@ public class Manager {
                         System.out.println("Choose which replica to kill (1,2,3)");
                         replica = scanner.nextInt();
                         manager.killReplica(replica);
+                        break;
+                    case 5:
+                        System.out.println("SABOTAGE REPLICA SELECTED");
+                        System.out.println("Choose which replica to sabotage (1,2,3)");
+                        replica = scanner.nextInt();
+                        manager.sabotageReplica(replica);
                         break;
 
                 }
