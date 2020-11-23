@@ -69,7 +69,7 @@ public class StoreInventory implements Serializable {
     public String getStock() {
         return this.items.values().stream()
                 .map(Item::toString)
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining(","));
     }
 
     public Item getItem(String itemID) {
