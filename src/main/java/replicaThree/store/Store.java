@@ -80,9 +80,9 @@ public class Store implements StoreStrategy {
         if (!itemID.substring(0, 2).equals(this.province.toString())) {
             return String.format(REMOVE_ITEM_ANOTHER_STORE, itemID);
         }
-        String[] info = this.inventory.get(itemID).split(",");
-        int current_quantity = Integer.parseInt(info[1]);
         if (this.inventory.containsKey(itemID)) {
+            String[] info = this.inventory.get(itemID).split(",");
+            int current_quantity = Integer.parseInt(info[1]);
             if (quantity == -1) {
                 this.inventory.remove(itemID);
                 return String.format(REMOVE_ITEM_SUCCESS, itemID, info[0]);
@@ -264,6 +264,7 @@ public class Store implements StoreStrategy {
 
     public String exchangeItem(String customerID, String newitemID, String oldItemID, String dateOfExchange) {
         //check return eligibility
+        customerClient customer = this.getCustomer(customerID);
         if (oldItemID.startsWith(this.province.toString())) {
             String eligibility = this.checkReturnElgible(customerID, oldItemID, dateOfExchange);
             if (eligibility.equals("expired")) {
@@ -274,42 +275,62 @@ public class Store implements StoreStrategy {
             }
         } else {
             String eligibility = this.sendMessage(this.portMap.get(oldItemID.substring(0, 2)),
-                    "RETURN_ELIGIBLE," + customerID + "," + oldItemID + "," + dateOfExchange);
+                    "RETURN_ELIGIBLE," + customerID + "," + oldItemID + "," + dateOfExchange).trim();
             if (eligibility.equals("expired")) {
-
                 return String.format(EXCHANGE_ITEM_POLICY_ERROR, oldItemID);
             } else if (eligibility.equals("not purchased")) {
-
                 return String.format(EXCHANGE_ITEM_CUSTOMER_NEVER_PURCHASED, oldItemID);
             }
         }
+
         //check item in stock
         int oldItemPrice = 0;
         int newItemPrice = 0;
         if (newitemID.startsWith(this.province.toString())) {
+            if(!this.inventory.containsKey(newitemID)){
+                return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, newitemID);
+            }
             String[] itemInfo = this.inventory.get(newitemID).split(",");
             if (Integer.parseInt(itemInfo[1]) == 0) {
-                return String.format(EXCHANGE_ITEM_POLICY_ERROR, oldItemID);
+                return String.format(EXCHANGE_ITEM_OUT_OF_STOCK, oldItemID, newitemID, newitemID);
             }
             oldItemPrice = Integer.parseInt(itemInfo[2]);
         } else {
-            String[] itemInfo = this.sendMessage(this.portMap.get(newitemID.substring(0, 2)),
-                    "ITEM_INFO_2," + newitemID).trim().split(",");
-            if (Integer.parseInt(itemInfo[1]) == 0) {
-                return String.format(EXCHANGE_ITEM_POLICY_ERROR, oldItemID);
+            if (!oldItemID.substring(0, 2).equals(newitemID.substring(0, 2)) && !customer.checkEligible(newitemID.substring(0, 2))) {
+                return String.format(EXCHANGE_ITEM_ANOTHER_STORE_LIMIT, oldItemID, newitemID);
             }
-            newItemPrice = Integer.parseInt(itemInfo[2]);
+            String itemAvailability = this.sendMessage(this.portMap.get(newitemID.substring(0, 2)),
+                    "ITEM_INFO_2," + newitemID).trim();
+            if (itemAvailability.equals("not available")) {
+                return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, newitemID);
+            } else if (itemAvailability.equals("out of stock")) {
+                return String.format(EXCHANGE_ITEM_OUT_OF_STOCK, oldItemID, newitemID, newitemID);
+            } else {
+                String[] itemInfo = itemAvailability.split(",");
+                newItemPrice = Integer.parseInt(itemInfo[2]);
+            }
+
         }
         //check budget
-        customerClient customer = this.getCustomer(customerID);
         int requiredBudget = Math.max(0, newItemPrice - oldItemPrice);
         if (customer.getBudget() < requiredBudget) {
-            return String.format(EXCHANGE_ITEM_POLICY_ERROR, oldItemID);
+            return String.format(EXCHANGE_ITEM_NOT_ENOUGH_FUNDS, oldItemID, newitemID, customerID);
         }
         this.returnItem(customerID, oldItemID, dateOfExchange);
         customer.setEligibility(oldItemID.substring(0, 2), true);
         this.purchaseItem(customerID, newitemID, dateOfExchange);
         return String.format(EXCHANGE_ITEM_SUCCESS, oldItemID, newitemID);
+    }
+
+    public String getInfo(String itemID) {
+        if (this.inventory.containsKey(itemID)) {
+            if (this.inventory.get(itemID).split(",")[1].equals("0"))
+                return "out of stock";
+            else
+                return this.inventory.get(itemID);
+        } else {
+            return "not available";
+        }
     }
 
     public String checkReturnElgible(String customerID, String itemID, String date) {
@@ -415,7 +436,7 @@ public class Store implements StoreStrategy {
                                 replyMessage = this.findLocalItem(itemName);
                                 break;
                             case "ITEM_INFO_2":
-                                replyMessage = this.inventory.get(requestArgs[1].trim());
+                                replyMessage = this.getInfo(requestArgs[1].trim());
                                 break;
                             case "RETURN": {
                                 String itemID = requestArgs[1];
