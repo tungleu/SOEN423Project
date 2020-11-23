@@ -281,13 +281,13 @@ public class Store {
         return itemPrice;
     }
 
-    private int verifyRemoteStorePurchase(String remoteStore, String customerID, String itemID) throws ItemOutOfStockException, NotEnoughFundsException {
+    private int verifyRemoteStorePurchase(String remoteStore, String customerID, String itemID) throws ItemOutOfStockException, NotEnoughFundsException, ItemDoesNotExistException {
         String purchaseResult = this.requestDispatcher.unicast(
                 Arrays.asList(PURCHASE_ITEM, String.valueOf(this.salesManager.getCustomerBudget(customerID)), itemID),
                 remoteStore).get(0);
 
         if(purchaseResult.equals(ItemDoesNotExistException.class.getSimpleName())) {
-            throw new ItemOutOfStockException("item with ID: " + itemID + " does not exist.");
+            throw new ItemDoesNotExistException("item with ID: " + itemID + " does not exist.");
         }
         if(purchaseResult.equals(ItemOutOfStockException.class.getSimpleName())) {
             throw new ItemOutOfStockException("item with ID: " + itemID + " is out of stock.");
