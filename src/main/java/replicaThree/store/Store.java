@@ -229,6 +229,7 @@ public class Store implements StoreStrategy {
                 String[] info = this.inventory.get(itemID).split(",");
                 this.addItem("Return Manager", itemID, info[0], 1, Integer.parseInt(info[2]));
                 customer.setBudget(customer.getBudget() + Integer.parseInt(info[2]));
+                this.removefromLog(customerID, itemID);
                 return String.format(RETURN_ITEM_SUCCESS, itemID);
             } else if (eligibility.equals("expired")) {
                 return String.format(RETURN_ITEM_POLICY_ERROR, itemID);
@@ -252,6 +253,7 @@ public class Store implements StoreStrategy {
         String eligibility = this.checkReturnElgible(customerID, itemID, dateOfReturn);
         if (eligibility.equals("eligible")) {
             String[] info = this.inventory.get(itemID).split(",");
+            this.removefromLog(customerID, itemID);
             this.addItem("Return Manager", itemID, info[0], 1, Integer.parseInt(info[2]));
             String price = this.inventory.get(itemID).split(",")[1];
             return "TRUE," + price;
@@ -259,6 +261,16 @@ public class Store implements StoreStrategy {
             return "EXPIRED";
         } else {
             return "NEVER_PURCHASED";
+        }
+    }
+
+    public void removefromLog(String customerID, String itemID) {
+        for (String log : this.purchaseLog) {
+            String[] logParams = log.split(",");
+            if (logParams[0].equals(itemID) && logParams[1].equals(customerID)) {
+                this.purchaseLog.remove(log);
+                break;
+            }
         }
     }
 
@@ -415,7 +427,7 @@ public class Store implements StoreStrategy {
                     DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                     try {
                         aSocket.receive(request);
-                        String[] requestArgs = new String(request.getData()).split(",");
+                        String[] requestArgs = new String(request.getData()).trim().split(",");
                         switch (requestArgs[0]) {
                             case "PURCHASE": {
                                 String customerID = requestArgs[1];
