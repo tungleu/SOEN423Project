@@ -427,7 +427,7 @@ public class Store implements StoreStrategy {
                     DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                     try {
                         aSocket.receive(request);
-                        String[] requestArgs = new String(request.getData()).split(",");
+                        String[] requestArgs = new String(request.getData()).trim().split(",");
                         switch (requestArgs[0]) {
                             case "PURCHASE": {
                                 String customerID = requestArgs[1];
