@@ -95,11 +95,11 @@ public final class UserItemTransactionUtil {
 
         // Completed ignore steps if they already purchased from store as foreign customer
         if (isForeignCustomer && serverInventory.getForeignCustomers().contains(userId) && !isItemToReturnLocal) {
-            return String.format(EXCHANGE_ITEM_ANOTHER_STORE_LIMIT, itemToPurchase.getItemId(), itemIdToReturn);
+            return String.format(EXCHANGE_ITEM_ANOTHER_STORE_LIMIT, itemIdToReturn, itemToPurchase.getItemId());
         }
 
         if (itemToPurchase == null) {
-            return String.format(EXCHANGE_ITEM_OUT_OF_STOCK, itemIdToReturn, itemToBuy, itemToBuy);
+            return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, itemToBuy);
         }
 
         String message;
