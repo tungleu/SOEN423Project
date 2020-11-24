@@ -161,7 +161,7 @@ public class Store implements StoreStrategy {
             }
         } else {
             System.out.println("The given item ID doesn't exist");
-            return String.format(PURCHASE_ITEM_OUT_OF_STOCK, itemID);
+            return String.format(PURCHASE_ITEM_DOES_NOT_EXIST, itemID);
         }
     }
 
