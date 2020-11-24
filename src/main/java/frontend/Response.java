@@ -1,12 +1,11 @@
 package frontend;
 
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import static common.ReplicaConstants.*;
-import static common.ReplicaConstants.REPLICA_MANAGER_ONE;
+import static util.StringUtil.sortStr;
 
 
 public class Response {
@@ -27,32 +26,28 @@ public class Response {
         return responses.values();
     }
 
-    public Map<String, String> getResponseMap() {
-        return responses;
-    }
-
     public long getInitialTime() {
         return timeCreated;
     }
 
     public String getFinalResponse() {
-        logger.info("Final response for sequence number " + sequenceNumber + ": " + reverseResponses);
-        Set<String> values = new HashSet<>();
-        for (String value : this.getResponses()) {
-            if (!values.add(value))
-                return value;
-        }
-        return "";
+        Map<String, List<String>> logContainer = new HashMap<>();
+        reverseResponses.forEach((k, v) -> logContainer.computeIfAbsent(responses.get(v.get(0)), logKey -> v));
+        logger.info("Final response for sequence number " + sequenceNumber + ": " + logContainer);
+
+        String validReplicaName = reverseResponses.values().stream().max(Comparator.comparing(List::size)).get().get(0);
+        return responses.get(validReplicaName);
     }
 
     public void addResponse(String replicaManager, String response) {
         this.responses.put(replicaManager, response);
-        this.reverseResponses.computeIfAbsent(response, k -> new ArrayList<>());
-        this.reverseResponses.get(response).add(replicaManager);
+        String sortedResponse = sortStr(response);
+        this.reverseResponses.computeIfAbsent(sortedResponse, k -> new ArrayList<>());
+        this.reverseResponses.get(sortedResponse).add(replicaManager);
     }
 
     public boolean isEqual() {
-        return this.getResponses().stream().distinct().count() <= 1;
+        return reverseResponses.size() <= 1;
     }
 
     public synchronized long getSequenceNumber() {
@@ -64,24 +59,16 @@ public class Response {
     }
 
     public String getFailureReplicaManager() {
-        String replicaManager = "";
-        if (responses.values().size() != 3) {
+        if (responses.size() != 3) {
             for (String name : REPLICA_MANAGER_NAMES) {
                 if (!responses.containsKey(name)) {
+                    logger.severe("Missing response from: " + name);
                     return name;
                 }
             }
-        } else {
-            String responseOne = this.responses.get(REPLICA_MANAGER_ONE);
-            if (responseOne.equals(this.responses.get(REPLICA_MANAGER_TWO))) {
-                replicaManager = REPLICA_MANAGER_THREE;
-            } else if (responseOne.equals(this.responses.get(REPLICA_MANAGER_THREE))) {
-                replicaManager = REPLICA_MANAGER_TWO;
-            } else {
-                replicaManager = REPLICA_MANAGER_ONE;
-            }
-            return replicaManager;
         }
-        return replicaManager;
+        String brokenReplicaName = reverseResponses.values().stream().min(Comparator.comparing(List::size)).get().get(0);
+        logger.severe("Invalid response from: " + brokenReplicaName);
+        return brokenReplicaName;
     }
 }
