@@ -147,7 +147,7 @@ public class Store implements StoreStrategy {
         if (this.inventory.containsKey(itemID)) {
             String[] info = this.inventory.get(itemID).split(",");
             if (Integer.parseInt(info[1]) > 0) {
-                if (budget > Integer.parseInt(info[2])) {
+                if (budget >= Integer.parseInt(info[2])) {
                     int returnBudget = budget - Integer.parseInt(info[2]);
                     info[1] = Integer.toString(Integer.parseInt(info[1]) - 1);
                     inventory.replace(itemID, String.join(",", info));
@@ -170,7 +170,7 @@ public class Store implements StoreStrategy {
         if (this.inventory.containsKey(itemID)) {
             String[] info = this.inventory.get(itemID).split(",");
             if (Integer.parseInt(info[1]) > 0) {
-                if (customer.getBudget() > Integer.parseInt(info[2])) {
+                if (customer.getBudget() >= Integer.parseInt(info[2])) {
                     customer.setBudget(customer.getBudget() - Integer.parseInt(info[2]));
                     info[1] = Integer.toString(Integer.parseInt(info[1]) - 1);
                     inventory.replace(itemID, String.join(",", info));
