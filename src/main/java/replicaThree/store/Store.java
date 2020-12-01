@@ -440,7 +440,7 @@ public class Store implements StoreStrategy {
                             case "WAITLIST": {
                                 String customerID = requestArgs[1];
                                 String itemID = requestArgs[2];
-                                this.addLocalWaitList(customerID, itemID);
+                                replyMessage = this.addLocalWaitList(customerID, itemID);
                                 break;
                             }
                             case "ITEM_INFO":
